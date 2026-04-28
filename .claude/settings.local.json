@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(/usr/bin/find /usr/local /opt /Users/fabiomosimann/Library -name \"tsc\" -type f)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5174/)",
+      "Bash(npx tsc:*)",
+      "Bash(ls /Users/fabiomosimann/Documents/Claude/Projects/GridBid/postcss.config*)",
+      "Bash(curl -s http://localhost:5174/)",
+      "Bash(curl -s \"http://localhost:5174/index.css\")",
+      "Bash(curl -s \"http://localhost:5174/dev/index.css\")",
+      "Bash(pkill -f \"vite.*5174\")",
+      "Bash(lsof -ti:5174)",
+      "Bash(xargs kill:*)",
+      "Bash(curl -s \"http://localhost:5175/index.css\")",
+      "Bash(find /Users/fabiomosimann/Documents/Claude/Projects/GridBid/src -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) -exec grep -l \"user\\\\|User\\\\|account\\\\|Account\\\\|subscription\\\\|Subscription\" {} \\\\;)",
+      "mcp__Claude_Preview__preview_start"
+    ]
+  }
+}
