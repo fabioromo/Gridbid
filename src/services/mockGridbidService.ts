@@ -7,6 +7,7 @@ import {
   type GridbidBidding,
 } from "../types/domain";
 import type { GridbidService } from "./gridbidService";
+import houseWiedikon from "../assets/house-wiedikon.png";
 
 function uuid(): string {
   return Math.random().toString(36).slice(2, 10);
@@ -20,19 +21,26 @@ function fakePublicUrl(id: string): string {
   return `https://gridbid.local/b/${id}`;
 }
 
+function futureDate(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  d.setHours(12, 0, 0, 0);
+  return d.toISOString();
+}
+
 const INITIAL_BIDDINGS: GridbidBidding[] = [
   {
     id: "b001",
     title: "Einfamilienhaus Zürich-Witikon",
     address: "Witikoner Strasse 42, 8053 Zürich",
     websiteUrl: "https://www.homegate.ch/kaufen/b001",
-    imageUrl: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=200&h=200&fit=crop&crop=entropy&q=80",
+    imageUrl: houseWiedikon,
     processType: ProcessType.SEALED_BID,
     status: BiddingStatus.ACTIVE,
     priceDisplay: PriceDisplay.HIDDEN,
     richtpreis: 1_500_000,
     listingPrice: null,
-    deadline: "2026-05-01T12:00:00.000Z",
+    deadline: futureDate(14),
     publicUrl: fakePublicUrl("b001"),
     roundsPlanned: 2,
     biddingRules: "Nur hypothekarisch gesicherte Angebote. Besichtigung: Sa 14. Juni, 10–12 Uhr.",
@@ -242,6 +250,7 @@ export class MockGridbidService implements GridbidService {
       title: input?.title ?? "",
       address: input?.address ?? "",
       websiteUrl: input?.websiteUrl ?? undefined,
+      imageUrl: input?.imageUrl ?? undefined,
       processType: input?.processType ?? ProcessType.SEALED_BID,
       status: BiddingStatus.DRAFT,
       priceDisplay: input?.priceDisplay ?? PriceDisplay.HIDDEN,
@@ -269,6 +278,7 @@ export class MockGridbidService implements GridbidService {
   }
 
   async activateBidding(id: string): Promise<GridbidBidding> {
+    await new Promise<void>((r) => setTimeout(r, 2500));
     const index = this.biddings.findIndex((b) => b.id === id);
     if (index === -1) throw new Error(`Bidding ${id} not found`);
     this.biddings[index] = {

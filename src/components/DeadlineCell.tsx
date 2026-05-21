@@ -52,30 +52,17 @@ function Countdown({ deadline }: CountdownProps) {
   const isWarning = diff < 7 * 86_400_000;  // < 7 d   → amber (but > 48 h)
 
   const colorCls = isUrgent
-    ? "text-red-500"
+    ? "text-[#ce4742]"
     : isWarning
-    ? "text-amber-500"
-    : "text-green-700";
+    ? "text-[#b56100]"
+    : "text-[#b56100]";
 
-  const segments: Array<{ v: number; u: string }> = [
-    { v: d, u: "D" },
-    { v: h, u: "H" },
-    { v: m, u: "M" },
-    { v: s, u: "S" },
-  ];
+  const formatted = `${d}d : ${h}h : ${m}m : ${s}s`;
 
   return (
-    <div className={`flex items-baseline gap-0.5 font-mono tabular-nums ${colorCls} ${isUrgent ? "animate-pulse" : ""}`}>
-      {segments.map(({ v, u }, i) => (
-        <React.Fragment key={u}>
-          {i > 0 && (
-            <span className="mx-px text-xs opacity-40">:</span>
-          )}
-          <span className="text-sm font-semibold">{String(v).padStart(2, "0")}</span>
-          <span className="text-[10px] font-medium uppercase opacity-50">{u}</span>
-        </React.Fragment>
-      ))}
-    </div>
+    <span className={`whitespace-nowrap font-mono text-sm tabular-nums ${colorCls} ${isUrgent ? "animate-pulse" : ""}`}>
+      {formatted}
+    </span>
   );
 }
 
@@ -98,23 +85,23 @@ interface DeadlineCellProps {
 const DeadlineCell: React.FC<DeadlineCellProps> = ({ status, deadline }) => {
   if (status === BiddingStatus.DRAFT) {
     return (
-      <div className="flex items-center py-4 pr-5">
-        <span className="text-sm text-gray-300">—</span>
+      <div className="flex items-center relative px-6 py-3 before:absolute before:left-0 before:top-1/2 before:h-8 before:w-px before:-translate-y-1/2 before:bg-gray-200 before:content-['']">
+        <span className="text-sm text-[#73787a]">—</span>
       </div>
     );
   }
 
   if (!deadline) {
     return (
-      <div className="flex items-center py-4 pr-5">
-        <span className="text-xs text-gray-400">Ohne Frist</span>
+      <div className="flex items-center relative px-6 py-3 before:absolute before:left-0 before:top-1/2 before:h-8 before:w-px before:-translate-y-1/2 before:bg-gray-200 before:content-['']">
+        <span className="whitespace-nowrap text-sm text-[#73787a]">Ohne Frist</span>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col justify-center gap-1 py-4 pr-5">
-      <span className="text-xs text-gray-600">
+    <div className="flex flex-col justify-center border-l border-gray-200 gap-0.5 px-6 py-3">
+      <span className="whitespace-nowrap text-sm text-[#2f363a]">
         {formatDeadlineDate(deadline)}
       </span>
       <Countdown deadline={deadline} />

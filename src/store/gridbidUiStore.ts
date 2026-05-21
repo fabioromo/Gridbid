@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { GridbidUiState, GridbidView, AppMode } from "../types/ui";
-import type { BuyerView, BuyerDealRoomTab, BuyerRegistration, BuyerAccessTier } from "../types/buyer";
+import type { BuyerView, BuyerDealRoomTab, BuyerRegistration, BuyerAccessTier, BidData } from "../types/buyer";
 import type { GridbidBidding } from "../types/domain";
 
 interface BuyerState {
@@ -11,6 +11,7 @@ interface BuyerState {
   buyerRegistration: BuyerRegistration | null;
   buyerAccessTier: BuyerAccessTier | null;
   buyerDealRoomTab: BuyerDealRoomTab;
+  activeBid: BidData | null;
   switchToAgency: () => void;
   switchToBuyer: (biddingId: string) => void;
   navigateBuyer: (view: BuyerView) => void;
@@ -18,6 +19,7 @@ interface BuyerState {
   setBuyerRegistration: (reg: BuyerRegistration) => void;
   setBuyerAccessTier: (tier: BuyerAccessTier) => void;
   setBuyerDealRoomTab: (tab: BuyerDealRoomTab) => void;
+  setActiveBid: (bid: BidData | null) => void;
 }
 
 type FullState = GridbidUiState & BuyerState;
@@ -39,9 +41,10 @@ export const useGridbidUiStore = create<FullState>((set) => ({
   buyerRegistration: null,
   buyerAccessTier: null,
   buyerDealRoomTab: "overview",
+  activeBid: null,
 
   switchToAgency() {
-    set({ mode: "agency", buyerView: "public", buyerBidding: null, buyerRegistration: null, buyerAccessTier: null });
+    set({ mode: "agency", buyerView: "public", buyerBidding: null, buyerRegistration: null, buyerAccessTier: null, activeBid: null });
   },
 
   switchToBuyer(biddingId: string) {
@@ -53,6 +56,7 @@ export const useGridbidUiStore = create<FullState>((set) => ({
       buyerRegistration: null,
       buyerAccessTier: null,
       buyerDealRoomTab: "overview",
+      activeBid: null,
     });
   },
 
@@ -75,5 +79,9 @@ export const useGridbidUiStore = create<FullState>((set) => ({
 
   setBuyerDealRoomTab(tab: BuyerDealRoomTab) {
     set({ buyerDealRoomTab: tab });
+  },
+
+  setActiveBid(bid) {
+    set({ activeBid: bid });
   },
 }));

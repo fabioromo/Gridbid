@@ -7,7 +7,7 @@ export default defineConfig({
   root: path.resolve(__dirname, "dev"),
   server: {
     host: true,
-    port: 5174,
+    port: process.env.PORT ? parseInt(process.env.PORT) : 5174,
     allowedHosts: true
   },
   build: {

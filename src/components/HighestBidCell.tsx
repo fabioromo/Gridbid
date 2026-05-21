@@ -41,8 +41,8 @@ const HighestBidCell: React.FC<HighestBidCellProps> = ({ bidding }) => {
   // DRAFT → bidding not started, show nothing meaningful
   if (status === BiddingStatus.DRAFT) {
     return (
-      <div className="flex items-center justify-end py-4 pr-5">
-        <span className="text-sm text-gray-300">—</span>
+      <div className="flex items-center relative px-6 py-3 before:absolute before:left-0 before:top-1/2 before:h-8 before:w-px before:-translate-y-1/2 before:bg-gray-200 before:content-['']">
+        <span className="text-sm text-[#73787a]">—</span>
       </div>
     );
   }
@@ -52,48 +52,43 @@ const HighestBidCell: React.FC<HighestBidCellProps> = ({ bidding }) => {
   // ACTIVE with no bids yet
   if (!topBid) {
     return (
-      <div className="flex items-center justify-end py-4 pr-5">
-        {status === BiddingStatus.ACTIVE ? (
-          <span className="text-xs italic text-gray-400">Noch keine Gebote</span>
-        ) : (
-          <span className="text-sm text-gray-300">—</span>
-        )}
+      <div className="flex items-center relative px-6 py-3 before:absolute before:left-0 before:top-1/2 before:h-8 before:w-px before:-translate-y-1/2 before:bg-gray-200 before:content-['']">
+        <span className="text-sm text-[#73787a]">—</span>
       </div>
     );
   }
 
-  // Has bids → show amount, spread, and bidder name
+  // Has bids → show amount + bidder name on line 1, delta on line 2
   const refPrice = getReferencePrice(bidding);
   const spread = refPrice !== null ? topBid.amount - refPrice : null;
   const isAbove = spread !== null && spread >= 0;
 
   return (
-    <div className="flex flex-col items-end justify-center py-4 pr-5">
-      {/* Top bid amount */}
-      <span className="text-sm font-semibold tabular-nums text-gray-900">
-        {formatCHF(topBid.amount)}
-      </span>
+    <div className="flex flex-col justify-center relative px-6 py-3 before:absolute before:left-0 before:top-1/2 before:h-8 before:w-px before:-translate-y-1/2 before:bg-gray-200 before:content-['']">
+      {/* Line 1: amount — bidder name */}
+      <div className="flex items-center gap-1.5 text-sm">
+        <span className="font-medium tabular-nums text-[#2f363a]">
+          {formatCHF(topBid.amount)}
+        </span>
+        <span className="text-[#73787a]">–</span>
+        <span className="truncate text-[#73787a]">{topBid.name}</span>
+      </div>
 
-      {/* Spread vs. reference price */}
+      {/* Line 2: delta vs. reference price */}
       {spread !== null && (
-        <span
-          className={`mt-0.5 flex items-center gap-0.5 text-xs font-medium ${
-            isAbove ? "text-green-600" : "text-red-500"
+        <div
+          className={`mt-0.5 flex items-center gap-1 text-sm ${
+            isAbove ? "text-[#288352]" : "text-[#ce4742]"
           }`}
           title={`Referenzpreis: ${formatCHF(refPrice!)}`}
         >
-          {isAbove ? "▲" : "▼"}
-          <span>
-            {isAbove ? "+" : "−"}
+          <span className="tabular-nums">
+            {isAbove ? "+ " : "− "}
             {formatCHF(Math.abs(spread))}
           </span>
-        </span>
+          <span className="text-xs">{isAbove ? "↑" : "↓"}</span>
+        </div>
       )}
-
-      {/* Bidder name */}
-      <span className="mt-0.5 max-w-[160px] truncate text-xs text-gray-400">
-        {topBid.name}
-      </span>
     </div>
   );
 };

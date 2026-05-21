@@ -14,7 +14,26 @@
       "Bash(xargs kill:*)",
       "Bash(curl -s \"http://localhost:5175/index.css\")",
       "Bash(find /Users/fabiomosimann/Documents/Claude/Projects/GridBid/src -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) -exec grep -l \"user\\\\|User\\\\|account\\\\|Account\\\\|subscription\\\\|Subscription\" {} \\\\;)",
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "Bash(wc -l \"/Users/fabiomosimann/.claude/projects/-Users-fabiomosimann-Documents-Claude-Projects-GridBid--claude-worktrees-eager-darwin-1eef7f/87a7749b-3c0d-47b5-a3f2-08d6792fb947.jsonl\")",
+      "Bash(python3)",
+      "mcp__ec7e982f-6991-4ef1-9bb0-7ffeffa10bcb__get_design_context",
+      "mcp__ec7e982f-6991-4ef1-9bb0-7ffeffa10bcb__get_screenshot",
+      "Bash(curl -s -o /Users/fabiomosimann/Documents/Claude/Projects/GridBid/src/assets/icon-standard.png \"https://www.figma.com/api/mcp/asset/69c10af8-aeb0-4416-aee5-d516a667c00c\")",
+      "Bash(curl -s -o /Users/fabiomosimann/Documents/Claude/Projects/GridBid/src/assets/icon-price-led.png \"https://www.figma.com/api/mcp/asset/9326e93e-8fca-4466-ba4b-b9915fc89260\")",
+      "Bash(curl -s -o /Users/fabiomosimann/Documents/Claude/Projects/GridBid/src/assets/icon-multi-level.png \"https://www.figma.com/api/mcp/asset/1e53797b-6936-407e-872f-83f107c305e8\")",
+      "Bash(curl -s -o /Users/fabiomosimann/Documents/Claude/Projects/GridBid/src/assets/icon-custom.png \"https://www.figma.com/api/mcp/asset/e7aa4ca7-30e4-48da-8f94-650b2e8383f2\")",
+      "mcp__ec7e982f-6991-4ef1-9bb0-7ffeffa10bcb__get_metadata",
+      "Bash(curl -s -o /tmp/gridbid_branding.png \"https://www.figma.com/api/mcp/asset/6de8a407-f2d1-4677-b5f2-836efdc94bdd\")",
+      "Bash(find /Users/fabiomosimann -name \"*.png\" -newer /Users/fabiomosimann/Documents/Claude/Projects/GridBid/src/assets/icon-standard.png -not -path \"*/Library/*\" 2>/dev/null | head -20)",
+      "Bash(find /var/folders /tmp -name \"*.png\" -newer /Users/fabiomosimann/Documents/Claude/Projects/GridBid/package.json 2>/dev/null | head -10)",
+      "Bash(cp \"/Users/fabiomosimann/Downloads/Shortcut home cards.png\" \"/Users/fabiomosimann/Documents/Claude/Projects/GridBid/src/assets/house-wiedikon.png\")",
+      "Bash(curl -s \"http://localhost:51599/src/components/StepActivate.tsx\")",
+      "Bash(curl -sv \"http://localhost:51599/src/components/StepActivate.tsx\")",
+      "mcp__ec7e982f-6991-4ef1-9bb0-7ffeffa10bcb__search_design_system",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)"
     ]
   }
 }

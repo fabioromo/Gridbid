@@ -57,6 +57,18 @@ export interface BuyerVerificationSignals {
   financingProofUploaded: boolean;
 }
 
+// ── Active bid (placed by buyer, tracked in session) ─────────────────────────
+export interface BidData {
+  amount: number;
+  validityDays: number;
+  financingStatus: FinancingStatus;
+  closingDate: string; // "sofort" | "YYYY-MM" | ""
+  conditions: string;
+  idUploaded: boolean;
+  financingProofUploaded: boolean;
+  submittedAt: string; // ISO date string
+}
+
 // ── Navigation ────────────────────────────────────────────────────────────────
 export type BuyerView = "public" | "register" | "dealroom";
 export type BuyerDealRoomTab = "overview" | "documents" | "qa" | "bid";

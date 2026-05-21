@@ -30,21 +30,32 @@ export interface GridbidPluginShape extends GridAIPlugin {
 const GridbidIcon: React.ComponentType = () =>
   React.createElement(
     "svg",
-    {
-      xmlns: "http://www.w3.org/2000/svg",
-      width: 20,
-      height: 20,
-      viewBox: "0 0 24 24",
-      fill: "none",
-      stroke: "currentColor",
-      strokeWidth: 2,
-      strokeLinecap: "round",
-      strokeLinejoin: "round",
-    },
-    React.createElement("rect", { x: 3, y: 3, width: 7, height: 7 }),
-    React.createElement("rect", { x: 14, y: 3, width: 7, height: 7 }),
-    React.createElement("rect", { x: 3, y: 14, width: 7, height: 7 }),
-    React.createElement("rect", { x: 14, y: 14, width: 7, height: 7 })
+    { xmlns: "http://www.w3.org/2000/svg", width: 20, height: 20, viewBox: "0 0 24 24", fill: "#4782f3" },
+    // Cross — 5 large dots
+    React.createElement("circle", { cx: 12, cy: 12,   r: 2.63 }),
+    React.createElement("circle", { cx: 12, cy: 7,    r: 2.63 }),
+    React.createElement("circle", { cx: 12, cy: 17,   r: 2.63 }),
+    React.createElement("circle", { cx: 7,  cy: 12,   r: 2.63 }),
+    React.createElement("circle", { cx: 17, cy: 12,   r: 2.63 }),
+    // Diagonal — 4 medium dots
+    React.createElement("circle", { cx: 7,  cy: 7,    r: 2.07 }),
+    React.createElement("circle", { cx: 17, cy: 7,    r: 2.07 }),
+    React.createElement("circle", { cx: 7,  cy: 17,   r: 2.07 }),
+    React.createElement("circle", { cx: 17, cy: 17,   r: 2.07 }),
+    // Cardinal far — 4 medium-small dots
+    React.createElement("circle", { cx: 12, cy: 1.84, r: 1.84 }),
+    React.createElement("circle", { cx: 12, cy: 22.2, r: 1.84 }),
+    React.createElement("circle", { cx: 1.84, cy: 12, r: 1.84 }),
+    React.createElement("circle", { cx: 22.2, cy: 12, r: 1.84 }),
+    // Outer ring — 8 small dots
+    React.createElement("circle", { cx: 7,    cy: 1.84, r: 1.22 }),
+    React.createElement("circle", { cx: 17,   cy: 1.84, r: 1.22 }),
+    React.createElement("circle", { cx: 7,    cy: 22.2, r: 1.22 }),
+    React.createElement("circle", { cx: 17,   cy: 22.2, r: 1.22 }),
+    React.createElement("circle", { cx: 1.84, cy: 7,    r: 1.22 }),
+    React.createElement("circle", { cx: 22.2, cy: 7,    r: 1.22 }),
+    React.createElement("circle", { cx: 1.84, cy: 17,   r: 1.22 }),
+    React.createElement("circle", { cx: 22.2, cy: 17,   r: 1.22 }),
   );
 
 export function createGridbidPlugin(

@@ -5,41 +5,23 @@ import HighestBidCell from "./HighestBidCell";
 import DeadlineCell from "./DeadlineCell";
 
 // Shared grid column template — must match the header row in BiddingsOverview
-export const ROW_GRID = "grid-cols-[88px_1fr_180px_84px_112px_164px_116px_116px]";
+// Columns: photo+name | status | highest-bid | bids | participants | deadline | actions
+export const ROW_GRID = "grid-cols-[380px_140px_260px_88px_128px_1fr_auto]";
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
 
-const STATUS_STYLE: Record<
-  BiddingStatus,
-  { label: string; cls: string; style?: React.CSSProperties; dot?: boolean }
-> = {
+const STATUS_STYLE: Record<BiddingStatus, { label: string; badgeCls: string }> = {
   [BiddingStatus.DRAFT]: {
     label: "Entwurf",
-    cls: "border",
-    style: {
-      backgroundColor: "#f3f4f6",
-      color: "#6b7280",
-      borderColor: "#e5e7eb",
-    },
+    badgeCls: "bg-[#fbf2ea] text-[#b56100]",
   },
   [BiddingStatus.ACTIVE]: {
     label: "Aktiv",
-    cls: "border",
-    style: {
-      backgroundColor: "#eaf3ee",
-      color: "#206942",
-      borderColor: "#bfdacb",
-    },
-    dot: true,
+    badgeCls: "bg-[#dcf5ea] text-[#009877]",
   },
   [BiddingStatus.CLOSED]: {
     label: "Abgelaufen",
-    cls: "border",
-    style: {
-      backgroundColor: "#fbf2ea",
-      color: "#a45f1d",
-      borderColor: "#f2d8c0",
-    },
+    badgeCls: "bg-[#faedec] text-[#ce4742]",
   },
 };
 
@@ -66,14 +48,13 @@ const BiddingRow: React.FC<BiddingRowProps> = ({ bidding }) => {
       onClick={() => navigate("detail", bidding.id)}
       className={[
         `grid ${ROW_GRID}`,
-        "cursor-pointer items-stretch",
-        "border-b border-gray-100 last:border-b-0",
-        "transition-colors hover:bg-violet-50",
+        "min-h-[60px] cursor-pointer items-center",
+        "transition-colors hover:bg-gray-50",
       ].join(" ")}
     >
-      {/* Photo — inset with rounded corners */}
-      <div className="self-stretch p-2">
-        <div className="h-full overflow-hidden rounded-lg">
+      {/* Col 1: Photo (60×40px) + title + address */}
+      <div className="flex items-center gap-4 pl-2 pr-6">
+        <div className="h-10 w-[60px] shrink-0 overflow-hidden rounded-[4px]">
           {bidding.imageUrl ? (
             <img
               src={bidding.imageUrl}
@@ -81,82 +62,57 @@ const BiddingRow: React.FC<BiddingRowProps> = ({ bidding }) => {
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full min-h-[64px] w-full items-center justify-center bg-gray-100 text-gray-300">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="h-5 w-5"
-              >
+            <div className="flex h-full w-full items-center justify-center bg-gray-100 text-gray-300">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
                 <path d="M3 9.5L12 3l9 6.5V21H15v-5h-6v5H3V9.5z" />
               </svg>
             </div>
           )}
         </div>
+        <div className="min-w-0">
+          <p className="truncate text-base font-medium leading-6 text-[#182024]">
+            {bidding.title || "Unbenannt"}
+          </p>
+          <p className="truncate text-sm text-[#73787a]">{bidding.address || "—"}</p>
+        </div>
       </div>
 
-      {/* Object title + address */}
-      <div className="flex flex-col justify-center py-4 pr-5">
-        <p className="text-sm font-medium leading-snug text-gray-900">
-          {bidding.title || "Unbenannt"}
-        </p>
-        <p className="mt-0.5 text-xs text-gray-400">{bidding.address || "—"}</p>
-      </div>
-
-      {/* Highest bid — spread indicator + bidder name */}
-      <HighestBidCell bidding={bidding} />
-
-      {/* Unique bidder count */}
-      <div className="flex items-center justify-end py-4 pr-5">
-        <span
-          className={`text-sm tabular-nums ${
-            uniqueBidders > 0 ? "font-medium text-gray-900" : "text-gray-300"
-          }`}
-        >
-          {uniqueBidders}
-        </span>
-      </div>
-
-      {/* Participant (registered buyer) count */}
-      <div className="flex items-center justify-end py-4 pr-5">
-        <span
-          className={`text-sm tabular-nums ${
-            bidding.participants.length > 0 ? "font-medium text-gray-900" : "text-gray-300"
-          }`}
-        >
-          {bidding.participants.length}
-        </span>
-      </div>
-
-      {/* Deadline — date + live countdown */}
-      <DeadlineCell status={bidding.status} deadline={bidding.deadline} />
-
-      {/* Status badge */}
-      <div className="flex items-center py-4 pr-5">
-        <span
-          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${badge.cls}`}
-          style={badge.style}
-        >
-          {badge.dot && (
-            <span
-              className="h-1.5 w-1.5 rounded-full animate-pulse"
-              style={{ backgroundColor: "#288352" }}
-            />
-          )}
+      {/* Col 2: Status badge */}
+      <div className="relative flex items-center px-6 before:absolute before:left-0 before:top-1/2 before:h-8 before:w-px before:-translate-y-1/2 before:bg-gray-200 before:content-['']">
+        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${badge.badgeCls}`}>
           {badge.label}
         </span>
       </div>
 
-      {/* Action */}
-      <div className="flex items-center justify-end py-4 pr-5">
+      {/* Col 3: Highest bid — amount — name / delta */}
+      <HighestBidCell bidding={bidding} />
+
+      {/* Col 4: Unique bidder count (centered) */}
+      <div className="relative flex items-center justify-center text-sm tabular-nums text-[#182024] before:absolute before:left-0 before:top-1/2 before:h-8 before:w-px before:-translate-y-1/2 before:bg-gray-200 before:content-['']">
+        {uniqueBidders > 0 ? uniqueBidders : <span className="text-[#73787a]">—</span>}
+      </div>
+
+      {/* Col 5: Participant count (centered) */}
+      <div className="relative flex items-center justify-center text-sm tabular-nums text-[#182024] before:absolute before:left-0 before:top-1/2 before:h-8 before:w-px before:-translate-y-1/2 before:bg-gray-200 before:content-['']">
+        {bidding.participants.length > 0
+          ? bidding.participants.length
+          : <span className="text-[#73787a]">—</span>}
+      </div>
+
+      {/* Col 6: Deadline — date + live countdown */}
+      <DeadlineCell status={bidding.status} deadline={bidding.deadline} />
+
+      {/* Col 7: Actions — Deal Room */}
+      <div className="flex items-center pr-2">
         <button
           onClick={(e) => {
             e.stopPropagation();
             navigate("detail", bidding.id);
           }}
-          className="whitespace-nowrap rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:border-gray-300 hover:bg-white hover:text-gray-900"
+          className="flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full bg-[#f6f6f6] px-3 text-sm font-medium text-[#182024] transition-colors hover:bg-gray-200"
         >
-          Deal Room →
+          Deal Room
+          <span className="text-xs">→</span>
         </button>
       </div>
     </div>

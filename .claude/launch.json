@@ -5,7 +5,8 @@
       "name": "gridbid-dev-harness",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev:harness"],
-      "port": 5174
+      "port": 5174,
+      "autoPort": true
     }
   ]
 }

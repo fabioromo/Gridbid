@@ -87,6 +87,7 @@ export type CreateDraftInput = Partial<
     | "title"
     | "address"
     | "websiteUrl"
+    | "imageUrl"
     | "processType"
     | "priceDisplay"
     | "richtpreis"

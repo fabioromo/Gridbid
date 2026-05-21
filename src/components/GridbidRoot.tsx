@@ -16,7 +16,7 @@ const GridbidRoot: React.FC = () => {
   }
 
   return (
-    <div className="min-h-full bg-gray-50 text-gray-900">
+    <div className="min-h-full bg-white text-gray-900">
       {view === "overview" && <BiddingsOverview />}
       {view === "create" && <CreateBiddingWizard />}
       {view === "detail" && <BiddingDetail />}

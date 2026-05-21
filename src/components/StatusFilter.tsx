@@ -57,27 +57,15 @@ const StatusFilter: React.FC<StatusFilterProps> = ({ biddings, active, onChange 
             onClick={() => handleClick(value)}
             disabled={isEmpty && !isActive}
             className={[
-              "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors",
+              "inline-flex h-8 items-center gap-2 rounded-full px-3 text-sm transition-colors",
               isActive
-                ? "bg-violet-600 text-white shadow-sm"
+                ? "border-[1.5px] border-[#2f363a] bg-[#f6f6f6] font-medium text-[#182024]"
                 : isEmpty
-                ? "cursor-default bg-gray-100 text-gray-300"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900",
+                ? "cursor-default border border-[#e8e9e9] bg-white font-normal text-[#73787a] opacity-40"
+                : "border border-[#e8e9e9] bg-white font-normal text-[#182024] hover:border-[#2f363a] hover:bg-[#f6f6f6]",
             ].join(" ")}
           >
-            {label}
-            <span
-              className={[
-                "min-w-[16px] rounded-full px-1 py-px text-[10px] tabular-nums leading-none",
-                isActive
-                  ? "bg-white/25 text-white"
-                  : isEmpty
-                  ? "bg-gray-200 text-gray-300"
-                  : "bg-gray-200 text-gray-500",
-              ].join(" ")}
-            >
-              {count}
-            </span>
+            {label} ({count})
           </button>
         );
       })}
