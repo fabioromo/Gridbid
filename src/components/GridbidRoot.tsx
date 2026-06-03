@@ -9,6 +9,7 @@ import { mockBidding, mockBuyers } from "../mocks/propertyWorkspaceMock";
 import BuyerPublicEntry from "./buyer/BuyerPublicEntry";
 import BuyerRegistration from "./buyer/BuyerRegistration";
 import BuyerDealRoom from "./buyer/BuyerDealRoom";
+import { AvatarDropdown } from "./AvatarDropdown";
 
 const GridbidRoot: React.FC = () => {
   const view = useGridbidUiStore((s) => s.view);
@@ -40,7 +41,14 @@ const GridbidRoot: React.FC = () => {
   }, [selectedBidding]);
 
   if (mode === "buyer") {
-    return <BuyerRoot />;
+    return (
+      <>
+        <BuyerRoot />
+        <div style={{ position: "fixed", top: 0, right: 0, zIndex: 300, padding: "14px 24px" }}>
+          <AvatarDropdown />
+        </div>
+      </>
+    );
   }
 
   return (

@@ -13,6 +13,7 @@ import {
   formatDate,
   formatTimeRemaining,
 } from "../../utils/labels";
+import { AvatarDropdown } from "../AvatarDropdown";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 
@@ -1857,12 +1858,7 @@ export function PropertyWorkspace({
           <GridBidLogoIcon />
           <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: "-0.01em", color: C.textDark }}>GridBid</span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 28, height: 28, flexShrink: 0, borderRadius: 9999, background: C.textInfo, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600, color: C.textWhite }}>
-            A
-          </div>
-          <span style={{ fontSize: 13, fontWeight: 500, color: C.textDark }}>Anton</span>
-        </div>
+        <AvatarDropdown />
       </header>
       <div style={{ height: 1, background: C.mono100 }} />
 

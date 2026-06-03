@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { BiddingStatus, type GridbidBidding } from "../types/domain";
+import { AvatarDropdown } from "./AvatarDropdown";
 import { useGridbidUiStore } from "../store/gridbidUiStore";
 import { useGridbidService } from "../services/GridbidServiceContext";
 import BiddingRow, { ROW_GRID } from "./BiddingCard";
@@ -123,12 +124,7 @@ const BiddingsOverview: React.FC = () => {
           <GridBidLogoIcon />
           <span className="text-sm font-semibold tracking-tight text-[#182024]">GridBid</span>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#4782f3] text-xs font-medium text-white">
-            A
-          </div>
-          <span className="text-sm font-medium text-[#182024]">Anton</span>
-        </div>
+        <AvatarDropdown />
       </header>
       <div className="h-px bg-[#e8e9e9]" />
 
