@@ -76,6 +76,7 @@ export const mockBidding: WorkspaceBidding = {
   round2InvitedBuyerIds: [],
   round2Transparency: "rank" as const,
   winnerId: null,
+  winnerName: null,
   finalPrice: null,
   participants: [
     { id: "buyer-1", name: "Anna Müller",   email: "anna.mueller@example.com",  registeredAt: "2025-05-01T10:30:00Z" },

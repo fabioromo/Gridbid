@@ -92,8 +92,10 @@ export interface GridbidBidding {
   round2InvitedBuyerIds: string[];
   /** Transparency setting for Runde 2 */
   round2Transparency: "rank" | "blind";
-  /** Buyer ID who received the Zuschlag — only set on CLOSED biddings */
+  /** Buyer ID who received the Zuschlag — only set on CLOSED biddings; null if external buyer */
   winnerId: string | null;
+  /** Free-text name when winner is not in the system (winnerId is null) */
+  winnerName: string | null;
   /** Agreed final price — only set on CLOSED biddings */
   finalPrice: number | null;
 }

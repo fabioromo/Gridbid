@@ -56,6 +56,7 @@ const INITIAL_BIDDINGS: GridbidBidding[] = [
     round2InvitedBuyerIds: [],
     round2Transparency: "rank",
     winnerId: null,
+    winnerName: null,
     finalPrice: null,
     participants: [
       { id: "p001", name: "Anna Müller",  email: "anna.mueller@example.ch",  registeredAt: "2026-04-10T08:00:00.000Z", phone: "+41 79 123 45 67" },
@@ -146,6 +147,7 @@ const INITIAL_BIDDINGS: GridbidBidding[] = [
     round2InvitedBuyerIds: [],
     round2Transparency: "rank",
     winnerId: null,
+    winnerName: null,
     finalPrice: null,
     createdAt: "2026-04-12T14:00:00.000Z",
   },
@@ -175,6 +177,7 @@ const INITIAL_BIDDINGS: GridbidBidding[] = [
     round2InvitedBuyerIds: [],
     round2Transparency: "rank",
     winnerId: "p005",
+    winnerName: null,
     finalPrice: 1_010_000,
     participants: [
       { id: "p005", name: "Carmen Suter", email: "carmen.suter@example.ch", registeredAt: "2026-03-10T11:00:00.000Z" },
@@ -218,6 +221,7 @@ const INITIAL_BIDDINGS: GridbidBidding[] = [
     round2InvitedBuyerIds: [],
     round2Transparency: "rank",
     winnerId: null,
+    winnerName: null,
     finalPrice: null,
     participants: [],
     offers: [],
@@ -248,6 +252,7 @@ const INITIAL_BIDDINGS: GridbidBidding[] = [
     round2InvitedBuyerIds: ["p006", "p007"],
     round2Transparency: "rank",
     winnerId: null,
+    winnerName: null,
     finalPrice: null,
     participants: [
       { id: "p006", name: "Franziska Huber",  email: "franziska.huber@example.ch",  registeredAt: "2026-05-15T09:00:00.000Z", phone: "+41 79 345 67 89" },
@@ -372,6 +377,7 @@ export class MockGridbidService implements GridbidService {
       round2InvitedBuyerIds: [],
       round2Transparency: "rank",
       winnerId: null,
+      winnerName: null,
       finalPrice: null,
       participants: [],
       offers: [],

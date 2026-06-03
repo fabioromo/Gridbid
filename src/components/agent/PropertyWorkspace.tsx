@@ -571,7 +571,7 @@ function AngeboteTab({
       </div>
 
       {/* ── Closed deal summary banner ── */}
-      {effectiveStatus === "closed" && bidding.winnerId && (
+      {effectiveStatus === "closed" && bidding.finalPrice != null && (
         <div style={{
           background: C.bgSuccess, borderRadius: C.radiusMd, padding: "14px 18px",
           marginTop: 16, border: `1px solid #BBF7D0`,
@@ -579,7 +579,9 @@ function AngeboteTab({
           <div style={{ ...T.label, color: C.textSuccess, marginBottom: 6 }}>ZUSCHLAG ERTEILT</div>
           <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
             <span style={{ fontSize: 14, fontWeight: 600, color: C.textSuccess }}>
-              {buyers.find(b => b.id === bidding.winnerId)?.name ?? bidding.winnerId}
+              {bidding.winnerId
+                ? (buyers.find(b => b.id === bidding.winnerId)?.name ?? bidding.winnerId)
+                : (bidding.winnerName ?? "Käufer:in unbekannt")}
             </span>
             {bidding.finalPrice != null && (
               <span style={{ fontFamily: "DM Mono, monospace", fontSize: 18, fontWeight: 600, color: C.textSuccess }}>
@@ -1531,38 +1533,50 @@ function Round2WizardModal({ open, onClose, buyers, uniqueBids, onConfirm }: Rou
 
 // ─── CloseWizardModal (2 steps) ───────────────────────────────────────────────
 
+const OTHER_WINNER = "__other__";
+
 interface CloseWizardProps {
   open: boolean;
   onClose: () => void;
   buyers: WorkspaceBuyer[];
   uniqueBids: GridbidOffer[];
-  onConfirm: (winnerId: string, finalPrice: number) => void;
+  onConfirm: (winnerId: string | null, winnerName: string | null, finalPrice: number) => void;
 }
 
 function CloseWizardModal({ open, onClose, buyers, uniqueBids, onConfirm }: CloseWizardProps) {
   const [step, setStep] = useState(0);
   const sortedBids = [...uniqueBids].sort((a, b) => b.amount - a.amount);
   const [winnerId, setWinnerId] = useState(sortedBids[0]?.participantId ?? "");
-  const [finalPrice, setFinalPrice] = useState(sortedBids[0]?.amount ?? 0);
+  const [otherName, setOtherName] = useState("");
+  const [finalPrice, setFinalPrice] = useState<number | "">(sortedBids[0]?.amount ?? "");
 
   React.useEffect(() => {
     if (open) {
       setStep(0);
       const top = [...uniqueBids].sort((a, b) => b.amount - a.amount)[0];
       setWinnerId(top?.participantId ?? "");
-      setFinalPrice(top?.amount ?? 0);
+      setOtherName("");
+      setFinalPrice(top?.amount ?? "");
     }
   }, [open, uniqueBids]);
 
   if (!open) return null;
 
-  const winnerName = buyers.find(b => b.id === winnerId)?.name ?? "—";
+  const isOther = winnerId === OTHER_WINNER;
+  const displayName = isOther
+    ? (otherName.trim() || "Käufer:in unbekannt")
+    : (buyers.find(b => b.id === winnerId)?.name ?? "—");
   const steps = ["Käufer:in", "Finalbetrag"];
+  const priceValid = finalPrice !== "" && Number(finalPrice) > 0;
 
   function handleWinnerChange(id: string) {
     setWinnerId(id);
-    const bid = uniqueBids.find(b => b.participantId === id);
-    if (bid) setFinalPrice(bid.amount);
+    if (id !== OTHER_WINNER) {
+      const bid = uniqueBids.find(b => b.participantId === id);
+      setFinalPrice(bid?.amount ?? "");
+    } else {
+      setFinalPrice("");
+    }
   }
 
   return (
@@ -1605,33 +1619,56 @@ function CloseWizardModal({ open, onClose, buyers, uniqueBids, onConfirm }: Clos
                   const name = buyers.find(b => b.id === bid.participantId)?.name ?? bid.participantId;
                   const checked = winnerId === bid.participantId;
                   return (
-                    <label key={bid.participantId} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: idx < sortedBids.length - 1 ? `1px solid ${C.mono100}` : "none", cursor: "pointer", background: checked ? C.bgSurface : "transparent" }}>
+                    <label key={bid.participantId} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: `1px solid ${C.mono100}`, cursor: "pointer", background: checked ? C.bgSurface : "transparent" }}>
                       <input type="radio" name="winner" checked={checked} onChange={() => handleWinnerChange(bid.participantId)} style={{ accentColor: C.textDark }} />
                       <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: C.textDark }}>{name}</span>
                       <span style={{ fontFamily: "DM Mono, monospace", fontSize: 14, color: C.textDark }}>{formatCHF(bid.amount)}</span>
                     </label>
                   );
                 })}
+                <label style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", cursor: "pointer", background: isOther ? C.bgSurface : "transparent" }}>
+                  <input type="radio" name="winner" checked={isOther} onChange={() => handleWinnerChange(OTHER_WINNER)} style={{ accentColor: C.textDark }} />
+                  <span style={{ flex: 1, fontSize: 14, color: C.textSubtle, fontStyle: "italic" }}>Andere Person (nicht im System)</span>
+                </label>
               </div>
             </div>
           )}
 
           {step === 1 && (
             <div>
+              {isOther && (
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: "block", marginBottom: 4, fontSize: 13, fontWeight: 600, color: C.textDefault }}>
+                    Name der Käufer:in <span style={{ fontWeight: 400, color: C.textSubtle }}>(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={otherName}
+                    onChange={e => setOtherName(e.target.value)}
+                    placeholder="z.B. Markus Berger"
+                    style={{ width: "100%", borderRadius: C.radiusMd, border: `1px solid ${C.mono300}`, padding: "8px 12px", fontSize: 13, color: C.textDefault, outline: "none", boxSizing: "border-box" }}
+                    onFocus={e => (e.currentTarget.style.borderColor = C.textInfo)}
+                    onBlur={e => (e.currentTarget.style.borderColor = C.mono300)}
+                  />
+                </div>
+              )}
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: "block", marginBottom: 4, fontSize: 13, fontWeight: 600, color: C.textDefault }}>Vereinbarter Kaufpreis (CHF)</label>
                 <input
                   type="number"
                   value={finalPrice}
-                  onChange={e => setFinalPrice(Number(e.target.value))}
+                  onChange={e => setFinalPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                  placeholder="z.B. 1500000"
                   style={{ width: "100%", borderRadius: C.radiusMd, border: `1px solid ${C.mono300}`, padding: "8px 12px", fontSize: 13, color: C.textDefault, outline: "none", boxSizing: "border-box", fontFamily: "DM Mono, monospace" }}
                   onFocus={e => (e.currentTarget.style.borderColor = C.textInfo)}
                   onBlur={e => (e.currentTarget.style.borderColor = C.mono300)}
                 />
               </div>
               <div style={{ background: C.bgSurface, borderRadius: C.radiusMd, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: C.textDark }}>{winnerName}</span>
-                <span style={{ fontFamily: "DM Mono, monospace", fontSize: 18, fontWeight: 600, color: C.textDark }}>{formatCHF(finalPrice)}</span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: C.textDark }}>{displayName}</span>
+                <span style={{ fontFamily: "DM Mono, monospace", fontSize: 18, fontWeight: 600, color: priceValid ? C.textDark : C.textSubtle }}>
+                  {priceValid ? formatCHF(Number(finalPrice)) : "—"}
+                </span>
               </div>
               <div style={{ marginTop: 12, fontSize: 12, color: C.textSubtle }}>
                 Alle anderen Bietenden werden benachrichtigt, dass das Verfahren abgeschlossen ist.
@@ -1655,9 +1692,14 @@ function CloseWizardModal({ open, onClose, buyers, uniqueBids, onConfirm }: Clos
             </button>
           ) : (
             <button
-              style={{ ...btn.success }}
+              style={{ ...btn.success, opacity: priceValid ? 1 : 0.4 }}
+              disabled={!priceValid}
               onClick={() => {
-                onConfirm(winnerId, finalPrice);
+                onConfirm(
+                  isOther ? null : winnerId,
+                  isOther ? (otherName.trim() || null) : null,
+                  Number(finalPrice),
+                );
                 onClose();
               }}
             >
@@ -1761,8 +1803,8 @@ export function PropertyWorkspace({
     });
   }
 
-  function handleCloseConfirm(winnerId: string, finalPrice: number) {
-    handleBiddingChange({ ...bidding, status: BiddingStatus.CLOSED, winnerId, finalPrice });
+  function handleCloseConfirm(winnerId: string | null, winnerName: string | null, finalPrice: number) {
+    handleBiddingChange({ ...bidding, status: BiddingStatus.CLOSED, winnerId, winnerName, finalPrice });
   }
 
   const propBids = useMemo(
@@ -1970,7 +2012,7 @@ export function PropertyWorkspace({
         onClose={() => setCloseWizardOpen(false)}
         buyers={registeredBuyers}
         uniqueBids={uniqueBids}
-        onConfirm={handleCloseConfirm}
+        onConfirm={(wId, wName, price) => handleCloseConfirm(wId, wName, price)}
       />
 
       {acceptModal !== null && (
@@ -1979,7 +2021,7 @@ export function PropertyWorkspace({
           buyers={registeredBuyers}
           uniqueBids={uniqueBids}
           onConfirm={(id) => {
-            handleBiddingChange({ ...bidding, status: BiddingStatus.CLOSED, winnerId: id, finalPrice: uniqueBids.find(b => b.participantId === id)?.amount ?? null });
+            handleBiddingChange({ ...bidding, status: BiddingStatus.CLOSED, winnerId: id, winnerName: null, finalPrice: uniqueBids.find(b => b.participantId === id)?.amount ?? null });
           }}
           onClose={() => setAcceptModal(null)}
         />
