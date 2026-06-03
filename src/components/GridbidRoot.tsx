@@ -23,12 +23,20 @@ const GridbidRoot: React.FC = () => {
 
   const workspaceBuyers = useMemo((): WorkspaceBuyer[] => {
     if (!selectedBidding) return mockBuyers;
-    return selectedBidding.participants.map((p) => ({
-      ...p,
-      buyerProfile: false,
-      idDocument: false,
-      financingProof: false,
-    }));
+    return selectedBidding.participants.map((p) => {
+      const latestOffer = [...selectedBidding.offers]
+        .filter((o) => o.participantId === p.id)
+        .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())[0];
+      const lvlStr = latestOffer?.verificationLevelAtSubmission ?? "level1";
+      const qualificationLevel: 1 | 2 | 3 = lvlStr === "level3" ? 3 : lvlStr === "level2" ? 2 : 1;
+      return {
+        ...p,
+        qualificationLevel,
+        buyerProfile: qualificationLevel >= 2,
+        idDocument: qualificationLevel >= 3,
+        financingProof: qualificationLevel >= 3,
+      };
+    });
   }, [selectedBidding]);
 
   if (mode === "buyer") {

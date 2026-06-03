@@ -269,6 +269,7 @@ function getFinancingTierFromLevel(level: 1 | 2 | 3): FinancingTier {
 }
 
 function getBuyerQualLevel(buyer: WorkspaceBuyer): 1 | 2 | 3 {
+  if (buyer.qualificationLevel) return buyer.qualificationLevel;
   if (buyer.idDocument && buyer.financingProof) return 3;
   if (buyer.phone && buyer.buyerProfile) return 2;
   return 1;
@@ -282,6 +283,7 @@ export type WorkspaceBuyer = GridbidParticipant & {
   idDocument: boolean;
   financingProof: boolean;
   offmarketOptIn?: boolean;
+  qualificationLevel?: 1 | 2 | 3;
 };
 
 export type WorkspaceBidding = GridbidBidding & {
