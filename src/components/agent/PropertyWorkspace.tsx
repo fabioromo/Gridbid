@@ -620,24 +620,10 @@ function AngeboteTab({
 
       {/* ── Section 2: Process health strip ── */}
       <div style={{ paddingTop: 20, paddingBottom: 20, borderBottom: `1px solid ${C.mono100}` }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)" }}>
-
-          {/* Frist */}
-          <div style={{ paddingRight: 20, borderRight: `1px solid ${C.mono100}` }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-              <IconTablerClock color={fristColor} />
-              <span style={T.label}>FRIST</span>
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: C.textDark }}>
-              {deadlinePassed ? "Abgelaufen" : (countdown || "Keine Frist")}
-            </div>
-            <div style={{ fontSize: 11, color: C.textSubtle, marginTop: 1 }}>
-              {bidding.deadline ? fmtDT(bidding.deadline) : "Keine Frist gesetzt"}
-            </div>
-          </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)" }}>
 
           {/* Käufer:innen */}
-          <div style={{ padding: "0 20px", borderRight: `1px solid ${C.mono100}` }}>
+          <div style={{ paddingRight: 20, borderRight: `1px solid ${C.mono100}` }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
               <IconTablerUsers color={C.textInfo} />
               <span style={T.label}>KÄUFER:INNEN</span>
