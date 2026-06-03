@@ -1,10 +1,10 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useGridbidUiStore } from "../store/gridbidUiStore";
 import BiddingsOverview from "./BiddingsOverview";
 import BiddingDetail from "./BiddingDetail";
 import CreateBiddingWizard from "./CreateBiddingWizard";
-// SHIM — swap BiddingDetail for PropertyWorkspace with mock data
 import PropertyWorkspace from "./agent/PropertyWorkspace";
+import type { WorkspaceBidding, WorkspaceBuyer } from "./agent/PropertyWorkspace";
 import { mockBidding, mockBuyers } from "../mocks/propertyWorkspaceMock";
 import BuyerPublicEntry from "./buyer/BuyerPublicEntry";
 import BuyerRegistration from "./buyer/BuyerRegistration";
@@ -14,6 +14,22 @@ const GridbidRoot: React.FC = () => {
   const view = useGridbidUiStore((s) => s.view);
   const mode = useGridbidUiStore((s) => s.mode);
   const navigate = useGridbidUiStore((s) => s.navigate);
+  const selectedBidding = useGridbidUiStore((s) => s.selectedBidding);
+
+  const workspaceBidding = useMemo((): WorkspaceBidding => {
+    if (!selectedBidding) return mockBidding;
+    return { ...selectedBidding, currentRound: 1 };
+  }, [selectedBidding]);
+
+  const workspaceBuyers = useMemo((): WorkspaceBuyer[] => {
+    if (!selectedBidding) return mockBuyers;
+    return selectedBidding.participants.map((p) => ({
+      ...p,
+      buyerProfile: false,
+      idDocument: false,
+      financingProof: false,
+    }));
+  }, [selectedBidding]);
 
   if (mode === "buyer") {
     return <BuyerRoot />;
@@ -25,8 +41,8 @@ const GridbidRoot: React.FC = () => {
       {view === "create" && <CreateBiddingWizard />}
       {view === "detail" && (
         <PropertyWorkspace
-          bidding={mockBidding}
-          buyers={mockBuyers}
+          bidding={workspaceBidding}
+          buyers={workspaceBuyers}
           onBack={() => navigate("overview")}
           onBiddingChange={() => undefined}
         />

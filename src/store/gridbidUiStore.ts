@@ -28,9 +28,10 @@ export const useGridbidUiStore = create<FullState>((set) => ({
   // Agency state
   view: "overview",
   selectedBiddingId: null,
+  selectedBidding: null,
 
-  navigate(view: GridbidView, id?: string) {
-    set({ view, selectedBiddingId: id ?? null });
+  navigate(view: GridbidView, id?: string, bidding?: GridbidBidding) {
+    set({ view, selectedBiddingId: id ?? null, selectedBidding: bidding ?? null });
   },
 
   // Buyer state
