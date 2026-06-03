@@ -22,6 +22,7 @@ export interface GridbidParticipant {
   name: string;
   email: string;
   registeredAt: string;
+  phone?: string;
 }
 
 export type OfferFinancingStatus = "open" | "in_preparation" | "confirmed";

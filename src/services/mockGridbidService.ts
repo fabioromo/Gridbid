@@ -53,9 +53,9 @@ const INITIAL_BIDDINGS: GridbidBidding[] = [
       { participantId: "p001", grantedAt: "2026-04-15T10:00:00.000Z", grantedBy: "agent001" },
     ],
     participants: [
-      { id: "p001", name: "Anna Müller",  email: "anna.mueller@example.ch",  registeredAt: "2026-04-10T08:00:00.000Z" },
+      { id: "p001", name: "Anna Müller",  email: "anna.mueller@example.ch",  registeredAt: "2026-04-10T08:00:00.000Z", phone: "+41 79 123 45 67" },
       { id: "p002", name: "Beat Keller",  email: "beat.keller@example.ch",   registeredAt: "2026-04-11T09:30:00.000Z" },
-      { id: "p003", name: "Daniela Frei", email: "daniela.frei@example.ch",  registeredAt: "2026-04-11T14:15:00.000Z" },
+      { id: "p003", name: "Daniela Frei", email: "daniela.frei@example.ch",  registeredAt: "2026-04-11T14:15:00.000Z", phone: "+41 76 234 56 78" },
       { id: "p004", name: "Ernst Hofer",  email: "ernst.hofer@example.ch",   registeredAt: "2026-04-12T07:45:00.000Z" },
     ],
     offers: [
