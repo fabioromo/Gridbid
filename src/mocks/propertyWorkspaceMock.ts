@@ -72,6 +72,11 @@ export const mockBidding: WorkspaceBidding = {
     level3: ["Kaufvertragsentwurf.pdf"],
   },
   phase3Grants: [],
+  round2Deadline: null,
+  round2InvitedBuyerIds: [],
+  round2Transparency: "rank" as const,
+  winnerId: null,
+  finalPrice: null,
   participants: [
     { id: "buyer-1", name: "Anna Müller",   email: "anna.mueller@example.com",  registeredAt: "2025-05-01T10:30:00Z" },
     { id: "buyer-2", name: "Beat Keller",   email: "beat.keller@example.com",   registeredAt: "2025-05-03T14:00:00Z" },

@@ -290,6 +290,12 @@ export type WorkspaceBidding = GridbidBidding & {
   currentRound: number;
 };
 
+// Violet accent for Round 2
+const VIOLET = {
+  bg:   "#EEEDFE",
+  text: "#7F77DD",
+};
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface PropertyWorkspaceProps {
@@ -306,31 +312,47 @@ type EffectiveStatus =
   | "active"
   | "deadline_passed"
   | "round2_active"
+  | "round2_deadline_passed"
   | "closed";
 
 function getEffectiveStatus(bidding: WorkspaceBidding): EffectiveStatus {
   if (bidding.status === BiddingStatus.DRAFT) return "draft";
   if (bidding.status === BiddingStatus.CLOSED) return "closed";
-  if (bidding.currentRound >= 2) return "round2_active";
+  if (bidding.round2Deadline) {
+    if (new Date(bidding.round2Deadline) < new Date()) return "round2_deadline_passed";
+    return "round2_active";
+  }
   if (bidding.deadline && new Date(bidding.deadline) < new Date())
     return "deadline_passed";
   return "active";
 }
 
+function fmtRound2Deadline(iso: string): string {
+  const d = new Date(iso);
+  const weekday = d.toLocaleDateString("de-CH", { weekday: "short" });
+  const day = d.getDate();
+  const month = d.toLocaleDateString("de-CH", { month: "short" });
+  const year = d.getFullYear();
+  const time = d.toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });
+  return `${weekday}, ${day}. ${month} ${year} · ${time}`;
+}
+
 const EFFECTIVE_STATUS_LABEL: Record<EffectiveStatus, string> = {
-  draft:           "Entwurf",
-  active:          "Aktiv",
-  deadline_passed: "Frist abgelaufen",
-  round2_active:   "Runde 2 aktiv",
-  closed:          "Abgeschlossen",
+  draft:                 "Entwurf",
+  active:                "Aktiv",
+  deadline_passed:       "Frist abgelaufen",
+  round2_active:         "Runde 2 aktiv",
+  round2_deadline_passed:"R2 Frist abgelaufen",
+  closed:                "Abgeschlossen",
 };
 
 const EFFECTIVE_STATUS_BADGE_STYLE: Record<EffectiveStatus, React.CSSProperties> = {
-  draft:           badge.neutral,
-  active:          badge.info,
-  deadline_passed: badge.warning,
-  round2_active:   badge.info,
-  closed:          badge.success,
+  draft:                 badge.neutral,
+  active:                badge.info,
+  deadline_passed:       badge.warning,
+  round2_active:         { background: VIOLET.bg, color: VIOLET.text, borderRadius: C.radiusMd, padding: "2px 8px", fontSize: 11, fontWeight: 600 },
+  round2_deadline_passed:badge.warning,
+  closed:                badge.success,
 };
 
 function StatusBadge({ status }: { status: EffectiveStatus }) {
@@ -352,6 +374,7 @@ interface AngeboteTabProps {
   onOpenRound2Modal: () => void;
   onOpenEndDeadlineModal: () => void;
   onAccept: (participantId: string) => void;
+  onOpenCloseWizard: () => void;
 }
 
 function AngeboteTab({
@@ -360,6 +383,8 @@ function AngeboteTab({
   propBids,
   uniqueBids,
   onAccept,
+  onOpenRound2Modal,
+  onOpenCloseWizard,
 }: AngeboteTabProps) {
   const [expandedBuyers, setExpandedBuyers] = useState<Set<string>>(new Set());
   const effectiveStatus = getEffectiveStatus(bidding);
@@ -388,7 +413,9 @@ function AngeboteTab({
   }
 
   const showEvalBar =
-    effectiveStatus === "deadline_passed" || effectiveStatus === "round2_active";
+    effectiveStatus === "deadline_passed" ||
+    effectiveStatus === "round2_active" ||
+    effectiveStatus === "round2_deadline_passed";
 
   const noBidBuyers = buyers.filter(
     (b) => !uniqueBids.some((bid) => bid.participantId === b.id)
@@ -423,17 +450,24 @@ function AngeboteTab({
   } else if (effectiveStatus === "deadline_passed") {
     nextStep = "Frist abgelaufen. Nimm das beste Angebot an oder schliesse das Verfahren ab.";
   } else if (effectiveStatus === "round2_active") {
-    nextStep = "Runde 2 läuft. Warte auf weitere Angebote bis zur neuen Frist.";
+    nextStep = "Runde 2 läuft. Sobald die Frist abgelaufen ist, kannst du das Verfahren abschliessen.";
+  } else if (effectiveStatus === "round2_deadline_passed") {
+    nextStep = "Runde 2 abgelaufen. Schliesse das Verfahren ab und erteile den Zuschlag.";
   } else if (effectiveStatus === "closed") {
     nextStep = "Verfahren abgeschlossen.";
   } else {
     nextStep = "Entwurf — aktiviere das Verfahren, um den Prozess zu starten.";
   }
 
+  // Which action buttons to show
+  const showRound2Btn = effectiveStatus === "active" || effectiveStatus === "deadline_passed";
+  const showCloseBtn = effectiveStatus === "active" || effectiveStatus === "deadline_passed" || effectiveStatus === "round2_active" || effectiveStatus === "round2_deadline_passed";
+
   // Section 2 cell data
   const deadlinePassed =
     effectiveStatus === "deadline_passed" ||
     effectiveStatus === "round2_active" ||
+    effectiveStatus === "round2_deadline_passed" ||
     effectiveStatus === "closed";
   const daysLeft =
     bidding.deadline
@@ -455,11 +489,13 @@ function AngeboteTab({
     : "Alle freigegeben";
   const docsSubColor = level3Docs.length > 0 ? C.textWarning : C.textSuccess;
 
-  const roundValue = `Runde ${bidding.currentRound} von ${bidding.roundsPlanned}`;
+  const currentRoundNum = bidding.round2Deadline ? 2 : 1;
+  const roundValue = `Runde ${currentRoundNum} von ${bidding.roundsPlanned}`;
   const roundSub =
     effectiveStatus === "active" ? "Läuft" :
     effectiveStatus === "deadline_passed" ? "Auswertung" :
     effectiveStatus === "round2_active" ? "Runde 2 aktiv" :
+    effectiveStatus === "round2_deadline_passed" ? "Auswertung Runde 2" :
     effectiveStatus === "closed" ? "Abgeschlossen" :
     "Nicht gestartet";
 
@@ -508,18 +544,22 @@ function AngeboteTab({
                 className="gridbid-pulse"
                 style={{
                   width: 7, height: 7, borderRadius: "50%",
-                  background: effectiveStatus === "active" ? C.textSuccess : C.textWarning,
+                  background: effectiveStatus === "active" ? C.textSuccess : effectiveStatus === "round2_active" ? VIOLET.text : C.textWarning,
                 }}
               />
-              <span style={{ fontSize: 13, fontWeight: 500, color: effectiveStatus === "active" ? C.textSuccess : C.textWarning }}>
+              <span style={{ fontSize: 13, fontWeight: 500, color: effectiveStatus === "active" ? C.textSuccess : effectiveStatus === "round2_active" ? VIOLET.text : C.textWarning }}>
                 {EFFECTIVE_STATUS_LABEL[effectiveStatus]}
               </span>
             </div>
-            {effectiveStatus === "active" || effectiveStatus === "round2_active" ? (
+            {effectiveStatus === "active" ? (
               <div style={{ fontFamily: "DM Mono, monospace", fontSize: 22, fontWeight: 500, color: C.textDark }}>
                 {countdown}
               </div>
-            ) : effectiveStatus === "deadline_passed" ? (
+            ) : effectiveStatus === "round2_active" && bidding.round2Deadline ? (
+              <div style={{ fontFamily: "DM Mono, monospace", fontSize: 22, fontWeight: 500, color: VIOLET.text }}>
+                {formatTimeRemaining(bidding.round2Deadline)}
+              </div>
+            ) : effectiveStatus === "deadline_passed" || effectiveStatus === "round2_deadline_passed" ? (
               <div style={{ fontSize: 13, fontWeight: 600, color: C.textWarning }}>Bereit zur Auswertung</div>
             ) : null}
             {bidding.deadline && (
@@ -529,6 +569,51 @@ function AngeboteTab({
           </div>
         </div>
       </div>
+
+      {/* ── Closed deal summary banner ── */}
+      {effectiveStatus === "closed" && bidding.winnerId && (
+        <div style={{
+          background: C.bgSuccess, borderRadius: C.radiusMd, padding: "14px 18px",
+          marginTop: 16, border: `1px solid #BBF7D0`,
+        }}>
+          <div style={{ ...T.label, color: C.textSuccess, marginBottom: 6 }}>ZUSCHLAG ERTEILT</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 14, fontWeight: 600, color: C.textSuccess }}>
+              {buyers.find(b => b.id === bidding.winnerId)?.name ?? bidding.winnerId}
+            </span>
+            {bidding.finalPrice != null && (
+              <span style={{ fontFamily: "DM Mono, monospace", fontSize: 18, fontWeight: 600, color: C.textSuccess }}>
+                {formatCHF(bidding.finalPrice)}
+              </span>
+            )}
+            <span style={{ ...badge.neutral, fontSize: 11 }}>
+              Runde {bidding.round2Deadline ? 2 : 1}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* ── Round 2 active banner ── */}
+      {effectiveStatus === "round2_active" && bidding.round2Deadline && (
+        <div style={{
+          background: VIOLET.bg, borderRadius: C.radiusMd, padding: "10px 16px",
+          marginBottom: 0, marginTop: 16,
+          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16,
+          border: `1px solid ${VIOLET.text}30`,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: VIOLET.text, flexShrink: 0 }} />
+            <span style={{ fontSize: 13, fontWeight: 600, color: VIOLET.text }}>Runde 2 läuft</span>
+            <span style={{ fontSize: 13, color: VIOLET.text }}>·</span>
+            <span style={{ fontFamily: "DM Mono, monospace", fontSize: 13, color: VIOLET.text }}>
+              {formatTimeRemaining(bidding.round2Deadline)}
+            </span>
+          </div>
+          <span style={{ fontSize: 13, color: VIOLET.text }}>
+            {bidding.round2InvitedBuyerIds.length} von {buyers.filter(b => uniqueBids.some(bid => bid.participantId === b.id)).length} Bietenden eingeladen
+          </span>
+        </div>
+      )}
 
       {/* ── Section 2: Process health strip ── */}
       <div style={{ paddingTop: 20, paddingBottom: 20, borderBottom: `1px solid ${C.mono100}` }}>
@@ -584,9 +669,31 @@ function AngeboteTab({
 
       {/* ── Section 3: Nächster Schritt ── */}
       <div style={{ paddingTop: 16, paddingBottom: 20, borderBottom: `1px solid ${C.mono100}` }}>
-        <div style={{ background: C.bgSurface, borderRadius: C.radiusMd, padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start" }}>
-          <IconTablerArrowRight />
-          <span style={{ fontSize: 13, color: C.textDefault }}>{nextStep}</span>
+        <div style={{ background: C.bgSurface, borderRadius: C.radiusMd, padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+            <IconTablerArrowRight />
+            <span style={{ fontSize: 13, color: C.textDefault }}>{nextStep}</span>
+          </div>
+          {(showRound2Btn || showCloseBtn) && (
+            <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+              {showRound2Btn && (
+                <button
+                  style={{ background: VIOLET.bg, color: VIOLET.text, border: `1px solid ${VIOLET.text}40`, borderRadius: C.radiusMd, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                  onClick={onOpenRound2Modal}
+                >
+                  Runde 2 starten
+                </button>
+              )}
+              {showCloseBtn && (
+                <button
+                  style={btn.secondarySm}
+                  onClick={onOpenCloseWizard}
+                >
+                  Verfahren abschliessen
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -656,6 +763,11 @@ function AngeboteTab({
               const priorBids = allBuyerBids.filter((b) => b.id !== bid.id);
               const level = buyer ? getBuyerQualLevel(buyer) : 1;
               const ft = getFinancingTierFromLevel(level);
+              const isInvitedToRound2 =
+                effectiveStatus !== "round2_active" && effectiveStatus !== "round2_deadline_passed"
+                  ? true
+                  : bidding.round2InvitedBuyerIds.includes(bid.participantId);
+              const bidRound = bid.round ?? 1;
               const bidDelta =
                 listPrice != null && listPrice > 0 ? bid.amount - listPrice : null;
               const bidDeltaPct =
@@ -664,7 +776,7 @@ function AngeboteTab({
                   : null;
 
               return (
-                <div key={bid.id} style={{ borderBottom: `1px solid ${C.mono100}` }}>
+                <div key={bid.id} style={{ borderBottom: `1px solid ${C.mono100}`, opacity: !isInvitedToRound2 ? 0.5 : 1 }}>
                   <div
                     style={{ display: "grid", gridTemplateColumns: "32px 1fr 140px 120px 90px", gap: 16, padding: "16px 0", alignItems: "start", cursor: "pointer" }}
                     onClick={() => toggleExpanded(bid.participantId)}
@@ -683,7 +795,21 @@ function AngeboteTab({
 
                     {/* Buyer */}
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 500, color: C.textDark }}>{name}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <div style={{ fontSize: 14, fontWeight: 500, color: C.textDark }}>{name}</div>
+                        {(effectiveStatus === "round2_active" || effectiveStatus === "round2_deadline_passed") && (
+                          <span style={
+                            bidRound === 2
+                              ? { background: VIOLET.bg, color: VIOLET.text, borderRadius: C.radiusMd, padding: "1px 6px", fontSize: 10, fontWeight: 700 }
+                              : { ...badge.neutral, padding: "1px 6px", fontSize: 10, fontWeight: 700 }
+                          }>
+                            {bidRound === 2 ? "R2" : "R1"}
+                          </span>
+                        )}
+                        {!isInvitedToRound2 && (
+                          <span style={{ ...badge.neutral, fontSize: 10 }}>Nicht eingeladen</span>
+                        )}
+                      </div>
                       {buyer && <div style={{ fontSize: 12, color: C.textSubtle, marginTop: 1 }}>{buyer.email}</div>}
                       <div style={{ marginTop: 4, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
                         <span style={ft.style}>{ft.label}</span>
@@ -696,12 +822,18 @@ function AngeboteTab({
 
                     {/* Amount */}
                     <div style={{ textAlign: "right" }}>
-                      <div style={{ fontFamily: "DM Mono, monospace", fontSize: 16, fontWeight: 500, color: idx === 0 ? C.textInfo : C.textDark }}>
-                        {formatCHF(bid.amount)}
-                      </div>
-                      <div style={{ fontFamily: "DM Mono, monospace", fontSize: 11, color: C.textSubtle, marginTop: 2 }}>
-                        {fmtDT(bid.submittedAt)}
-                      </div>
+                      {isInvitedToRound2 ? (
+                        <>
+                          <div style={{ fontFamily: "DM Mono, monospace", fontSize: 16, fontWeight: 500, color: idx === 0 ? C.textInfo : C.textDark }}>
+                            {formatCHF(bid.amount)}
+                          </div>
+                          <div style={{ fontFamily: "DM Mono, monospace", fontSize: 11, color: C.textSubtle, marginTop: 2 }}>
+                            {fmtDT(bid.submittedAt)}
+                          </div>
+                        </>
+                      ) : (
+                        <span style={{ fontSize: 13, color: C.textSubtle }}>—</span>
+                      )}
                     </div>
 
                     {/* Delta */}
@@ -1160,53 +1292,388 @@ function EinstellungenTab({ bidding, onBiddingChange }: EinstellungenTabProps) {
   );
 }
 
-// ─── Round2Modal ──────────────────────────────────────────────────────────────
+// ─── Warning modal (simple, reusable) ────────────────────────────────────────
 
-interface Round2ModalProps {
+interface WarningModalProps {
   open: boolean;
   onClose: () => void;
-  onConfirm: (newDeadline: string) => void;
+  onConfirm: () => void;
+  title: string;
+  body: string;
+  confirmLabel: string;
 }
 
-export function Round2Modal({ open, onClose, onConfirm }: Round2ModalProps) {
-  const [newDeadline, setNewDeadline] = useState("");
-
+function WarningModal({ open, onClose, onConfirm, title, body, confirmLabel }: WarningModalProps) {
   if (!open) return null;
-
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.4)" }}>
-      <div style={{ width: "100%", maxWidth: 448, borderRadius: C.radiusLg, background: C.bgPage, border: `1px solid ${C.mono100}`, padding: 24, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
-        <h2 style={{ marginBottom: 8, fontSize: 18, fontWeight: 700, color: C.textDark }}>Runde 2 starten</h2>
-        <p style={{ marginBottom: 20, fontSize: 13, color: C.textSubtle }}>
-          Alle qualifizierten Bieter:innen werden zur zweiten Runde eingeladen.
-          Lege eine neue Frist für Runde 2 fest.
-        </p>
-        <label style={{ display: "block", marginBottom: 4, fontSize: 11, fontWeight: 600, color: C.textSubtle }}>
-          Neue Frist
-        </label>
-        <input
-          type="datetime-local"
-          value={newDeadline}
-          onChange={(e) => setNewDeadline(e.target.value)}
-          style={{ width: "100%", borderRadius: C.radiusMd, border: `1px solid ${C.mono300}`, padding: "8px 12px", fontSize: 13, color: C.textDefault, outline: "none", boxSizing: "border-box" }}
-          onFocus={(e) => (e.currentTarget.style.borderColor = C.textInfo)}
-          onBlur={(e) => (e.currentTarget.style.borderColor = C.mono300)}
-        />
-        <div style={{ marginTop: 24, display: "flex", justifyContent: "flex-end", gap: 8 }}>
+      <div style={{ width: "100%", maxWidth: 400, borderRadius: C.radiusLg, background: C.bgPage, border: `1px solid ${C.mono100}`, padding: 24, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+        <h2 style={{ marginBottom: 10, fontSize: 16, fontWeight: 700, color: C.textDark }}>{title}</h2>
+        <p style={{ marginBottom: 24, fontSize: 13, color: C.textSubtle }}>{body}</p>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
           <button style={btn.secondary} onClick={onClose}>Abbrechen</button>
           <button
-            style={{ ...btn.primary, opacity: newDeadline ? 1 : 0.4 }}
-            disabled={!newDeadline}
-            onClick={() => {
-              if (newDeadline) { onConfirm(new Date(newDeadline).toISOString()); onClose(); }
-            }}
+            style={{ ...btn.primary, background: C.textError }}
+            onClick={() => { onConfirm(); onClose(); }}
           >
-            Runde 2 starten
+            {confirmLabel}
           </button>
         </div>
       </div>
     </div>
   );
+}
+
+// ─── Round2WizardModal (3 steps) ──────────────────────────────────────────────
+
+interface Round2WizardProps {
+  open: boolean;
+  onClose: () => void;
+  buyers: WorkspaceBuyer[];
+  uniqueBids: GridbidOffer[];
+  onConfirm: (invitedIds: string[], deadline: string, transparency: "rank" | "blind") => void;
+}
+
+function Round2WizardModal({ open, onClose, buyers, uniqueBids, onConfirm }: Round2WizardProps) {
+  const [step, setStep] = useState(0);
+  const [selected, setSelected] = useState<Set<string>>(new Set(uniqueBids.map(b => b.participantId)));
+  const [deadline, setDeadline] = useState("");
+  const [transparency, setTransparency] = useState<"rank" | "blind">("rank");
+
+  // Reset on open
+  React.useEffect(() => {
+    if (open) {
+      setStep(0);
+      setSelected(new Set(uniqueBids.map(b => b.participantId)));
+      setDeadline("");
+      setTransparency("rank");
+    }
+  }, [open, uniqueBids]);
+
+  if (!open) return null;
+
+  const sortedBids = [...uniqueBids].sort((a, b) => b.amount - a.amount);
+  const selectedIds = Array.from(selected);
+  const invitedNames = selectedIds
+    .map(id => buyers.find(b => b.id === id)?.name ?? id)
+    .join(", ");
+
+  const steps = ["Käufer:innen", "Frist & Transparenz", "Bestätigung"];
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.4)" }}>
+      <div style={{ width: "100%", maxWidth: 520, borderRadius: C.radiusLg, background: C.bgPage, border: `1px solid ${C.mono100}`, boxShadow: "0 8px 32px rgba(0,0,0,0.12)", overflow: "hidden" }}>
+        {/* Header */}
+        <div style={{ padding: "20px 24px 0" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: C.textDark, margin: 0 }}>Runde 2 starten</h2>
+            <button style={{ ...btn.ghost, padding: 4 }} onClick={onClose}>✕</button>
+          </div>
+          {/* Step indicator */}
+          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+            {steps.map((s, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{
+                  width: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 11, fontWeight: 700,
+                  background: i <= step ? VIOLET.text : C.mono100,
+                  color: i <= step ? "white" : C.textSubtle,
+                }}>
+                  {i < step ? "✓" : i + 1}
+                </div>
+                <span style={{ fontSize: 12, color: i === step ? C.textDark : C.textSubtle, fontWeight: i === step ? 600 : 400 }}>{s}</span>
+                {i < steps.length - 1 && <span style={{ color: C.mono300, fontSize: 11 }}>›</span>}
+              </div>
+            ))}
+          </div>
+          {/* Progress bar */}
+          <div style={{ height: 2, background: C.mono100, borderRadius: 1, marginBottom: 0 }}>
+            <div style={{ height: 2, background: VIOLET.text, borderRadius: 1, width: `${((step + 1) / steps.length) * 100}%`, transition: "width 0.2s" }} />
+          </div>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: 24 }}>
+          {step === 0 && (
+            <div>
+              <div style={{ marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={T.label}>BIETENDE AUSWÄHLEN</span>
+                <span style={{ fontSize: 12, color: C.textSubtle }}>{selected.size} von {sortedBids.length} eingeladen</span>
+              </div>
+              <div style={{ border: `1px solid ${C.mono100}`, borderRadius: C.radiusMd, overflow: "hidden" }}>
+                {sortedBids.map((bid, idx) => {
+                  const name = buyers.find(b => b.id === bid.participantId)?.name ?? bid.participantId;
+                  const checked = selected.has(bid.participantId);
+                  return (
+                    <label key={bid.participantId} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: idx < sortedBids.length - 1 ? `1px solid ${C.mono100}` : "none", cursor: "pointer", background: checked ? VIOLET.bg : "transparent" }}>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={e => {
+                          setSelected(prev => {
+                            const next = new Set(prev);
+                            if (e.target.checked) next.add(bid.participantId);
+                            else next.delete(bid.participantId);
+                            return next;
+                          });
+                        }}
+                        style={{ width: 16, height: 16, accentColor: VIOLET.text, cursor: "pointer" }}
+                      />
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0 }}>
+                        <div style={{
+                          width: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 11, fontWeight: 600, flexShrink: 0,
+                          background: idx === 0 ? C.textDark : "transparent",
+                          border: idx === 0 ? "none" : `1px solid ${C.mono300}`,
+                          color: idx === 0 ? "white" : C.textSubtle,
+                        }}>{idx + 1}</div>
+                        <span style={{ fontSize: 14, fontWeight: 500, color: C.textDark }}>{name}</span>
+                      </div>
+                      <span style={{ fontFamily: "DM Mono, monospace", fontSize: 14, fontWeight: 500, color: C.textDark, flexShrink: 0 }}>
+                        {formatCHF(bid.amount)}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+              {selected.size === 0 && (
+                <div style={{ marginTop: 8, fontSize: 12, color: C.textError }}>Mindestens 1 Bieter:in auswählen</div>
+              )}
+            </div>
+          )}
+
+          {step === 1 && (
+            <div>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", marginBottom: 4, fontSize: 13, fontWeight: 600, color: C.textDefault }}>Neue Frist</label>
+                <input
+                  type="datetime-local"
+                  value={deadline}
+                  onChange={e => setDeadline(e.target.value)}
+                  style={{ width: "100%", borderRadius: C.radiusMd, border: `1px solid ${C.mono300}`, padding: "8px 12px", fontSize: 13, color: C.textDefault, outline: "none", boxSizing: "border-box" }}
+                  onFocus={e => (e.currentTarget.style.borderColor = VIOLET.text)}
+                  onBlur={e => (e.currentTarget.style.borderColor = C.mono300)}
+                />
+              </div>
+              <div>
+                <div style={{ marginBottom: 8, fontSize: 13, fontWeight: 600, color: C.textDefault }}>Transparenz</div>
+                {(["rank", "blind"] as const).map(opt => (
+                  <label key={opt} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", borderRadius: C.radiusMd, border: `1px solid ${transparency === opt ? VIOLET.text : C.mono100}`, background: transparency === opt ? VIOLET.bg : "transparent", cursor: "pointer", marginBottom: 8 }}>
+                    <input type="radio" name="transparency" value={opt} checked={transparency === opt} onChange={() => setTransparency(opt)} style={{ marginTop: 2, accentColor: VIOLET.text }} />
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: C.textDark }}>
+                        {opt === "rank" ? "Rang sichtbar" : "Blind"}
+                      </div>
+                      <div style={{ fontSize: 12, color: C.textSubtle, marginTop: 1 }}>
+                        {opt === "rank" ? "Käufer:innen sehen ihren Rang, aber keine anderen Beträge" : "Käufer:innen wissen nur, dass sie eingeladen sind"}
+                      </div>
+                    </div>
+                  </label>
+                ))}
+                <div style={{ fontSize: 12, color: C.textSubtle, marginTop: 4 }}>
+                  Diese Einstellung gilt für alle eingeladenen Käufer:innen dieser Runde.
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div>
+              <div style={{ ...T.label, marginBottom: 12 }}>ZUSAMMENFASSUNG</div>
+              <div style={{ border: `1px solid ${C.mono100}`, borderRadius: C.radiusMd, overflow: "hidden" }}>
+                {[
+                  { label: "Eingeladene Bieter:innen", value: invitedNames },
+                  { label: "Neue Frist", value: deadline ? fmtRound2Deadline(deadline) : "—" },
+                  { label: "Transparenz", value: transparency === "rank" ? "Rang sichtbar" : "Blind" },
+                ].map(({ label, value }, i) => (
+                  <div key={label} style={{ display: "flex", gap: 16, padding: "12px 16px", borderBottom: i < 2 ? `1px solid ${C.mono100}` : "none" }}>
+                    <span style={{ fontSize: 12, color: C.textSubtle, flexShrink: 0, minWidth: 160 }}>{label}</span>
+                    <span style={{ fontSize: 13, color: C.textDark, fontWeight: 500 }}>{value}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: 12, fontSize: 12, color: C.textSubtle }}>
+                Nicht eingeladene Käufer:innen erhalten eine Benachrichtigung, dass das Verfahren für sie abgeschlossen ist.
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: "0 24px 20px", display: "flex", justifyContent: "space-between" }}>
+          <button style={btn.ghost} onClick={step === 0 ? onClose : () => setStep(s => s - 1)}>
+            {step === 0 ? "Abbrechen" : "← Zurück"}
+          </button>
+          {step < 2 ? (
+            <button
+              style={{ background: VIOLET.text, color: "white", border: "none", borderRadius: C.radiusMd, padding: "9px 18px", fontSize: 13, fontWeight: 600, cursor: selected.size === 0 || (step === 1 && !deadline) ? "not-allowed" : "pointer", opacity: selected.size === 0 || (step === 1 && !deadline) ? 0.4 : 1 }}
+              disabled={selected.size === 0 || (step === 1 && !deadline)}
+              onClick={() => setStep(s => s + 1)}
+            >
+              Weiter →
+            </button>
+          ) : (
+            <button
+              style={{ background: VIOLET.text, color: "white", border: "none", borderRadius: C.radiusMd, padding: "9px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+              onClick={() => {
+                onConfirm(Array.from(selected), new Date(deadline).toISOString(), transparency);
+                onClose();
+              }}
+            >
+              Runde 2 aktivieren
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── CloseWizardModal (2 steps) ───────────────────────────────────────────────
+
+interface CloseWizardProps {
+  open: boolean;
+  onClose: () => void;
+  buyers: WorkspaceBuyer[];
+  uniqueBids: GridbidOffer[];
+  onConfirm: (winnerId: string, finalPrice: number) => void;
+}
+
+function CloseWizardModal({ open, onClose, buyers, uniqueBids, onConfirm }: CloseWizardProps) {
+  const [step, setStep] = useState(0);
+  const sortedBids = [...uniqueBids].sort((a, b) => b.amount - a.amount);
+  const [winnerId, setWinnerId] = useState(sortedBids[0]?.participantId ?? "");
+  const [finalPrice, setFinalPrice] = useState(sortedBids[0]?.amount ?? 0);
+
+  React.useEffect(() => {
+    if (open) {
+      setStep(0);
+      const top = [...uniqueBids].sort((a, b) => b.amount - a.amount)[0];
+      setWinnerId(top?.participantId ?? "");
+      setFinalPrice(top?.amount ?? 0);
+    }
+  }, [open, uniqueBids]);
+
+  if (!open) return null;
+
+  const winnerName = buyers.find(b => b.id === winnerId)?.name ?? "—";
+  const steps = ["Käufer:in", "Finalbetrag"];
+
+  function handleWinnerChange(id: string) {
+    setWinnerId(id);
+    const bid = uniqueBids.find(b => b.participantId === id);
+    if (bid) setFinalPrice(bid.amount);
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.4)" }}>
+      <div style={{ width: "100%", maxWidth: 480, borderRadius: C.radiusLg, background: C.bgPage, border: `1px solid ${C.mono100}`, boxShadow: "0 8px 32px rgba(0,0,0,0.12)", overflow: "hidden" }}>
+        {/* Header */}
+        <div style={{ padding: "20px 24px 0" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: C.textDark, margin: 0 }}>Verfahren abschliessen</h2>
+            <button style={{ ...btn.ghost, padding: 4 }} onClick={onClose}>✕</button>
+          </div>
+          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+            {steps.map((s, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{
+                  width: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 11, fontWeight: 700,
+                  background: i <= step ? C.textDark : C.mono100,
+                  color: i <= step ? "white" : C.textSubtle,
+                }}>
+                  {i < step ? "✓" : i + 1}
+                </div>
+                <span style={{ fontSize: 12, color: i === step ? C.textDark : C.textSubtle, fontWeight: i === step ? 600 : 400 }}>{s}</span>
+                {i < steps.length - 1 && <span style={{ color: C.mono300, fontSize: 11 }}>›</span>}
+              </div>
+            ))}
+          </div>
+          <div style={{ height: 2, background: C.mono100, borderRadius: 1, marginBottom: 0 }}>
+            <div style={{ height: 2, background: C.textDark, borderRadius: 1, width: `${((step + 1) / steps.length) * 100}%`, transition: "width 0.2s" }} />
+          </div>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: 24 }}>
+          {step === 0 && (
+            <div>
+              <div style={{ ...T.label, marginBottom: 12 }}>WER ERHÄLT DEN ZUSCHLAG?</div>
+              <div style={{ border: `1px solid ${C.mono100}`, borderRadius: C.radiusMd, overflow: "hidden" }}>
+                {sortedBids.map((bid, idx) => {
+                  const name = buyers.find(b => b.id === bid.participantId)?.name ?? bid.participantId;
+                  const checked = winnerId === bid.participantId;
+                  return (
+                    <label key={bid.participantId} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: idx < sortedBids.length - 1 ? `1px solid ${C.mono100}` : "none", cursor: "pointer", background: checked ? C.bgSurface : "transparent" }}>
+                      <input type="radio" name="winner" checked={checked} onChange={() => handleWinnerChange(bid.participantId)} style={{ accentColor: C.textDark }} />
+                      <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: C.textDark }}>{name}</span>
+                      <span style={{ fontFamily: "DM Mono, monospace", fontSize: 14, color: C.textDark }}>{formatCHF(bid.amount)}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {step === 1 && (
+            <div>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", marginBottom: 4, fontSize: 13, fontWeight: 600, color: C.textDefault }}>Vereinbarter Kaufpreis (CHF)</label>
+                <input
+                  type="number"
+                  value={finalPrice}
+                  onChange={e => setFinalPrice(Number(e.target.value))}
+                  style={{ width: "100%", borderRadius: C.radiusMd, border: `1px solid ${C.mono300}`, padding: "8px 12px", fontSize: 13, color: C.textDefault, outline: "none", boxSizing: "border-box", fontFamily: "DM Mono, monospace" }}
+                  onFocus={e => (e.currentTarget.style.borderColor = C.textInfo)}
+                  onBlur={e => (e.currentTarget.style.borderColor = C.mono300)}
+                />
+              </div>
+              <div style={{ background: C.bgSurface, borderRadius: C.radiusMd, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: C.textDark }}>{winnerName}</span>
+                <span style={{ fontFamily: "DM Mono, monospace", fontSize: 18, fontWeight: 600, color: C.textDark }}>{formatCHF(finalPrice)}</span>
+              </div>
+              <div style={{ marginTop: 12, fontSize: 12, color: C.textSubtle }}>
+                Alle anderen Bietenden werden benachrichtigt, dass das Verfahren abgeschlossen ist.
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: "0 24px 20px", display: "flex", justifyContent: "space-between" }}>
+          <button style={btn.ghost} onClick={step === 0 ? onClose : () => setStep(s => s - 1)}>
+            {step === 0 ? "Abbrechen" : "← Zurück"}
+          </button>
+          {step < 1 ? (
+            <button
+              style={{ ...btn.primary, opacity: winnerId ? 1 : 0.4 }}
+              disabled={!winnerId}
+              onClick={() => setStep(1)}
+            >
+              Weiter →
+            </button>
+          ) : (
+            <button
+              style={{ ...btn.success }}
+              onClick={() => {
+                onConfirm(winnerId, finalPrice);
+                onClose();
+              }}
+            >
+              Zuschlag erteilen
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── (legacy export kept for any external consumers) ──────────────────────────
+export function Round2Modal({ open, onClose, onConfirm }: { open: boolean; onClose: () => void; onConfirm: (d: string) => void }) {
+  if (!open) return null;
+  return <Round2WizardModal open={open} onClose={onClose} buyers={[]} uniqueBids={[]} onConfirm={(_ids, deadline) => onConfirm(deadline)} />;
 }
 
 // ─── Accept modal ─────────────────────────────────────────────────────────────
@@ -1258,8 +1725,10 @@ export function PropertyWorkspace({
   const [bidding, setBidding] = useState(initialBidding);
   const [activeTab, setActiveTab] = useState<"bids" | "documents" | "settings">("bids");
   const [acceptModal, setAcceptModal] = useState<string | null>(null);
-  const [round2ModalOpen, setRound2ModalOpen] = useState(false);
-  const [endDeadlineModal, setEndDeadlineModal] = useState(false);
+  const [round2WizardOpen, setRound2WizardOpen] = useState(false);
+  const [round2WarningOpen, setRound2WarningOpen] = useState(false);
+  const [closeWizardOpen, setCloseWizardOpen] = useState(false);
+  const [closeWarningOpen, setCloseWarningOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
   function handleBiddingChange(updated: WorkspaceBidding) {
@@ -1267,9 +1736,33 @@ export function PropertyWorkspace({
     onBiddingChange(updated);
   }
 
-  function endDeadline() {
-    handleBiddingChange({ ...bidding, deadline: new Date(Date.now() - 1000).toISOString() });
-    setEndDeadlineModal(false);
+  function handleOpenRound2() {
+    const eff = getEffectiveStatus(bidding);
+    if (eff === "active") setRound2WarningOpen(true);
+    else setRound2WizardOpen(true);
+  }
+
+  function handleOpenClose() {
+    const eff = getEffectiveStatus(bidding);
+    if (eff === "active" || eff === "round2_active") setCloseWarningOpen(true);
+    else setCloseWizardOpen(true);
+  }
+
+  function handleRound2Confirm(invitedIds: string[], deadline: string, transparency: "rank" | "blind") {
+    handleBiddingChange({
+      ...bidding,
+      status: BiddingStatus.ACTIVE,
+      round2Deadline: deadline,
+      round2InvitedBuyerIds: invitedIds,
+      round2Transparency: transparency,
+      currentRound: 2,
+      // End round 1 deadline if still running
+      deadline: new Date(bidding.deadline ?? 0) > new Date() ? new Date(Date.now() - 1000).toISOString() : bidding.deadline,
+    });
+  }
+
+  function handleCloseConfirm(winnerId: string, finalPrice: number) {
+    handleBiddingChange({ ...bidding, status: BiddingStatus.CLOSED, winnerId, finalPrice });
   }
 
   const propBids = useMemo(
@@ -1430,9 +1923,10 @@ export function PropertyWorkspace({
               propBids={propBids}
               uniqueBids={uniqueBids}
               onBiddingChange={handleBiddingChange}
-              onOpenRound2Modal={() => setRound2ModalOpen(true)}
-              onOpenEndDeadlineModal={() => setEndDeadlineModal(true)}
+              onOpenRound2Modal={handleOpenRound2}
+              onOpenEndDeadlineModal={handleOpenClose}
               onAccept={setAcceptModal}
+              onOpenCloseWizard={handleOpenClose}
             />
           )}
           {activeTab === "documents" && (
@@ -1445,12 +1939,38 @@ export function PropertyWorkspace({
       </div>
 
       {/* Modals */}
-      <Round2Modal
-        open={round2ModalOpen}
-        onClose={() => setRound2ModalOpen(false)}
-        onConfirm={(newDeadline) => {
-          handleBiddingChange({ ...bidding, deadline: newDeadline, currentRound: 2 });
-        }}
+      <WarningModal
+        open={round2WarningOpen}
+        onClose={() => setRound2WarningOpen(false)}
+        onConfirm={() => setRound2WizardOpen(true)}
+        title="Runde 1 läuft noch"
+        body={`Runde 1 läuft noch bis ${bidding.deadline ? fmtDT(bidding.deadline) : "—"}. Wenn du jetzt startest, wird Runde 1 beendet.`}
+        confirmLabel="Runde 1 beenden & weiter"
+      />
+
+      <Round2WizardModal
+        open={round2WizardOpen}
+        onClose={() => setRound2WizardOpen(false)}
+        buyers={registeredBuyers}
+        uniqueBids={uniqueBids}
+        onConfirm={handleRound2Confirm}
+      />
+
+      <WarningModal
+        open={closeWarningOpen}
+        onClose={() => setCloseWarningOpen(false)}
+        onConfirm={() => setCloseWizardOpen(true)}
+        title="Verfahren läuft noch"
+        body={`Die Deadline läuft noch bis ${getEffectiveStatus(bidding) === "round2_active" && bidding.round2Deadline ? fmtDT(bidding.round2Deadline) : bidding.deadline ? fmtDT(bidding.deadline) : "—"}. Bist du sicher, dass du das Bieterverfahren jetzt beenden möchtest? Diese Aktion kann nicht rückgängig gemacht werden.`}
+        confirmLabel="Trotzdem beenden"
+      />
+
+      <CloseWizardModal
+        open={closeWizardOpen}
+        onClose={() => setCloseWizardOpen(false)}
+        buyers={registeredBuyers}
+        uniqueBids={uniqueBids}
+        onConfirm={handleCloseConfirm}
       />
 
       {acceptModal !== null && (
@@ -1459,45 +1979,10 @@ export function PropertyWorkspace({
           buyers={registeredBuyers}
           uniqueBids={uniqueBids}
           onConfirm={(id) => {
-            handleBiddingChange({ ...bidding, status: BiddingStatus.CLOSED });
-            console.log("Accepted bid from participant:", id);
+            handleBiddingChange({ ...bidding, status: BiddingStatus.CLOSED, winnerId: id, finalPrice: uniqueBids.find(b => b.participantId === id)?.amount ?? null });
           }}
           onClose={() => setAcceptModal(null)}
         />
-      )}
-
-      {endDeadlineModal && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.4)" }}>
-          <div style={{ width: "100%", maxWidth: 384, borderRadius: C.radiusLg, background: C.bgPage, border: `1px solid ${C.mono100}`, padding: 24, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
-            <div style={{ marginBottom: 16, display: "flex", justifyContent: "center" }}>
-              <div style={{ display: "flex", width: 64, height: 64, alignItems: "center", justifyContent: "center", borderRadius: 9999, background: C.bgWarning, color: C.textWarning }}>
-                <IconClock />
-              </div>
-            </div>
-            <h2 style={{ marginBottom: 8, textAlign: "center", fontSize: 18, fontWeight: 700, color: C.textDark }}>
-              Möchtest du die Frist wirklich beenden?
-            </h2>
-            <p style={{ marginBottom: 24, textAlign: "center", fontSize: 13, color: C.textSubtle }}>
-              Danach können keine neuen Angebote mehr eingereicht werden.
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <button style={{ ...btn.warning, width: "100%", textAlign: "center" }} onClick={endDeadline}>
-                Frist beenden
-              </button>
-              {bidding.roundsPlanned >= 2 && (
-                <button
-                  style={{ ...btn.secondary, width: "100%", textAlign: "center", borderColor: C.textInfo, color: C.textInfo }}
-                  onClick={() => { setEndDeadlineModal(false); setRound2ModalOpen(true); }}
-                >
-                  Neue Runde starten
-                </button>
-              )}
-              <button style={{ ...btn.ghost, width: "100%", textAlign: "center" }} onClick={() => setEndDeadlineModal(false)}>
-                Abbrechen
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );

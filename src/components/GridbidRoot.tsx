@@ -18,7 +18,7 @@ const GridbidRoot: React.FC = () => {
 
   const workspaceBidding = useMemo((): WorkspaceBidding => {
     if (!selectedBidding) return mockBidding;
-    return { ...selectedBidding, currentRound: 1 };
+    return { ...selectedBidding, currentRound: selectedBidding.round2Deadline ? 2 : 1 };
   }, [selectedBidding]);
 
   const workspaceBuyers = useMemo((): WorkspaceBuyer[] => {

@@ -43,6 +43,8 @@ export interface GridbidOffer {
   verificationLevelAtSubmission: BuyerLevel;
   version: number;
   submittedAt: string;
+  /** Which bidding round this offer belongs to (1 = Runde 1, 2 = Runde 2) */
+  round?: number;
 }
 
 export interface Phase3Grant {
@@ -84,6 +86,16 @@ export interface GridbidBidding {
   wizardStep?: number;
   /** ISO timestamp when the bidding was closed — only set on CLOSED biddings */
   closedAt?: string;
+  /** ISO deadline for Runde 2 — presence signals that Runde 2 has been started */
+  round2Deadline: string | null;
+  /** Buyer IDs invited to participate in Runde 2 */
+  round2InvitedBuyerIds: string[];
+  /** Transparency setting for Runde 2 */
+  round2Transparency: "rank" | "blind";
+  /** Buyer ID who received the Zuschlag — only set on CLOSED biddings */
+  winnerId: string | null;
+  /** Agreed final price — only set on CLOSED biddings */
+  finalPrice: number | null;
 }
 
 export type CreateDraftInput = Partial<
