@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import { AvatarDropdown } from "../AvatarDropdown";
 import { useGridbidUiStore } from "../../store/gridbidUiStore";
 import type {
   BuyerRegistration,
@@ -468,7 +469,6 @@ const BuyerRegistration: React.FC = () => {
   const navigateBuyer        = useGridbidUiStore((s) => s.navigateBuyer);
   const setBuyerRegistration = useGridbidUiStore((s) => s.setBuyerRegistration);
   const buyerBidding         = useGridbidUiStore((s) => s.buyerBidding);
-  const switchToAgency       = useGridbidUiStore((s) => s.switchToAgency);
 
   const [step, setStep] = useState<1 | 2>(1);
   const [isGrantingAccess, setIsGrantingAccess] = useState(false);
@@ -549,12 +549,9 @@ const BuyerRegistration: React.FC = () => {
             <GridBidLogoIcon />
             <span className="text-sm font-semibold tracking-tight text-gray-900">GridBid</span>
           </div>
-          <button
-            onClick={switchToAgency}
-            className="text-sm text-gray-400 transition-colors hover:text-gray-700"
-          >
-            Zurück zur Agenturansicht
-          </button>
+          <AvatarDropdown>
+            <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#D1D5DB" }} />
+          </AvatarDropdown>
         </div>
         <div className="h-px bg-gray-100" />
       </header>

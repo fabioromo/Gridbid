@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useGridbidUiStore } from "../../store/gridbidUiStore";
 import { useGridbidService } from "../../services/GridbidServiceContext";
 import type { GridbidBidding } from "../../types/domain";
+import { AvatarDropdown } from "../AvatarDropdown";
 
 // ── Logo ──────────────────────────────────────────────────────────────────────
 
@@ -140,7 +141,6 @@ const BuyerPublicEntry: React.FC = () => {
   const buyerBiddingId  = useGridbidUiStore((s) => s.buyerBiddingId);
   const navigateBuyer   = useGridbidUiStore((s) => s.navigateBuyer);
   const setBuyerBidding = useGridbidUiStore((s) => s.setBuyerBidding);
-  const switchToAgency  = useGridbidUiStore((s) => s.switchToAgency);
   const service = useGridbidService();
 
   const [bidding, setBidding] = useState<GridbidBidding | null>(null);
@@ -193,12 +193,9 @@ const BuyerPublicEntry: React.FC = () => {
             <GridBidLogoIcon />
             <span className="text-sm font-semibold tracking-tight text-gray-900">GridBid</span>
           </div>
-          <button
-            onClick={switchToAgency}
-            className="text-sm text-gray-400 transition-colors hover:text-gray-700"
-          >
-            Zurück zur Agenturansicht
-          </button>
+          <AvatarDropdown>
+            <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#D1D5DB" }} />
+          </AvatarDropdown>
         </div>
         <div className="h-px bg-gray-100" />
       </header>

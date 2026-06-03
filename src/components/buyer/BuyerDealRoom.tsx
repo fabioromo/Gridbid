@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useGridbidUiStore } from "../../store/gridbidUiStore";
+import { AvatarDropdown } from "../AvatarDropdown";
 
 // ─── Logo ─────────────────────────────────────────────────────────────────────
 
@@ -186,7 +187,6 @@ const BuyerDealRoom: React.FC = () => {
   const buyerRegistration = useGridbidUiStore((s) => s.buyerRegistration);
   const activeTab = useGridbidUiStore((s) => s.buyerDealRoomTab);
   const setTab = useGridbidUiStore((s) => s.setBuyerDealRoomTab);
-  const switchToAgency = useGridbidUiStore((s) => s.switchToAgency);
   const activeBid = useGridbidUiStore((s) => s.activeBid);
   const setActiveBid = useGridbidUiStore((s) => s.setActiveBid);
   const service = useGridbidService();
@@ -266,26 +266,21 @@ const BuyerDealRoom: React.FC = () => {
             </div>
           )}
 
-          {/* Right: user badge + back link */}
+          {/* Right: user badge */}
           <div className="flex shrink-0 items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gw-50 text-[10px] font-medium text-gw-700">
-                {initials}
+            <AvatarDropdown>
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gw-50 text-[10px] font-medium text-gw-700">
+                  {initials}
+                </div>
+                <span className="text-sm font-medium text-gray-900">Käufer</span>
               </div>
-              <span className="text-sm font-medium text-gray-900">Käufer</span>
-            </div>
+            </AvatarDropdown>
             <span className="flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2 py-0.5">
               <LevelBarIcon />
               <span className="text-xs font-medium text-gray-700">Level</span>
               <span className="text-xs font-medium text-amber-600">1 von 3</span>
             </span>
-            <div className="h-5 w-px bg-gray-200" />
-            <button
-              onClick={switchToAgency}
-              className="text-sm text-gray-400 transition-colors hover:text-gray-700"
-            >
-              Zurück zur Agenturansicht
-            </button>
           </div>
         </div>
         <div className="h-px bg-gray-100" />

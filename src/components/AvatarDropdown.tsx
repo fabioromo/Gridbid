@@ -3,7 +3,12 @@ import { BiddingStatus } from "../types/domain";
 import { useGridbidUiStore } from "../store/gridbidUiStore";
 import { useGridbidService } from "../services/GridbidServiceContext";
 
-export function AvatarDropdown() {
+interface AvatarDropdownProps {
+  /** Custom trigger content. When omitted, renders the default agent avatar (A / Anton). */
+  children?: React.ReactNode;
+}
+
+export function AvatarDropdown({ children }: AvatarDropdownProps = {}) {
   const mode = useGridbidUiStore((s) => s.mode);
   const switchToAgency = useGridbidUiStore((s) => s.switchToAgency);
   const switchToBuyer = useGridbidUiStore((s) => s.switchToBuyer);
@@ -42,16 +47,22 @@ export function AvatarDropdown() {
     },
   ];
 
+  const defaultTrigger = (
+    <>
+      <div style={{ width: 28, height: 28, flexShrink: 0, borderRadius: 9999, background: "#4782f3", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600, color: "white" }}>
+        A
+      </div>
+      <span style={{ fontSize: 13, fontWeight: 500, color: "#0D0D0D" }}>Anton</span>
+    </>
+  );
+
   return (
     <div ref={ref} style={{ position: "relative" }}>
       <button
         onClick={() => setOpen((o) => !o)}
         style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0 }}
       >
-        <div style={{ width: 28, height: 28, flexShrink: 0, borderRadius: 9999, background: "#4782f3", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600, color: "white" }}>
-          A
-        </div>
-        <span style={{ fontSize: 13, fontWeight: 500, color: "#0D0D0D" }}>Anton</span>
+        {children ?? defaultTrigger}
       </button>
 
       {open && (
