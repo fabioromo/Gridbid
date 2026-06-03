@@ -39,6 +39,7 @@ const GridbidRoot: React.FC = () => {
     <div className="min-h-full bg-white text-gray-900">
       {view === "overview" && <BiddingsOverview />}
       {view === "create" && <CreateBiddingWizard />}
+      {view === "edit" && <CreateBiddingWizard initialDraft={selectedBidding ?? undefined} />}
       {view === "detail" && (
         <PropertyWorkspace
           bidding={workspaceBidding}

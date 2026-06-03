@@ -45,7 +45,7 @@ const BiddingRow: React.FC<BiddingRowProps> = ({ bidding }) => {
 
   return (
     <div
-      onClick={() => navigate("detail", bidding.id, bidding)}
+      onClick={() => navigate(bidding.status === BiddingStatus.DRAFT ? "edit" : "detail", bidding.id, bidding)}
       className={[
         `grid ${ROW_GRID}`,
         "min-h-[60px] cursor-pointer items-center",
@@ -107,7 +107,7 @@ const BiddingRow: React.FC<BiddingRowProps> = ({ bidding }) => {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            navigate("detail", bidding.id, bidding);
+            navigate(bidding.status === BiddingStatus.DRAFT ? "edit" : "detail", bidding.id, bidding);
           }}
           className="flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full bg-[#f6f6f6] px-3 text-sm font-medium text-[#182024] transition-colors hover:bg-gray-200"
         >

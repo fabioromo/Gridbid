@@ -79,6 +79,10 @@ export interface GridbidBidding {
   participants: GridbidParticipant[];
   offers: GridbidOffer[];
   createdAt: string;
+  /** Last wizard step reached (0–3) — only set on DRAFT biddings */
+  wizardStep?: number;
+  /** ISO timestamp when the bidding was closed — only set on CLOSED biddings */
+  closedAt?: string;
 }
 
 export type CreateDraftInput = Partial<
@@ -96,6 +100,7 @@ export type CreateDraftInput = Partial<
     | "roundsPlanned"
     | "biddingRules"
     | "documents"
+    | "wizardStep"
   >
 >;
 
@@ -105,6 +110,7 @@ export type BiddingPatch = Partial<
     | "title"
     | "address"
     | "websiteUrl"
+    | "imageUrl"
     | "processType"
     | "priceDisplay"
     | "richtpreis"
@@ -113,5 +119,6 @@ export type BiddingPatch = Partial<
     | "roundsPlanned"
     | "biddingRules"
     | "documents"
+    | "wizardStep"
   >
 >;

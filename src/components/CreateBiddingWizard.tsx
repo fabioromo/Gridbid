@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { PriceDisplay, ProcessType, type BiddingDocuments, type CreateDraftInput } from "../types/domain";
+import { PriceDisplay, ProcessType, type BiddingDocuments, type CreateDraftInput, type GridbidBidding } from "../types/domain";
 import { useGridbidUiStore } from "../store/gridbidUiStore";
 import { useGridbidService } from "../services/GridbidServiceContext";
 import StepProcess from "./StepProcess";
@@ -128,13 +128,31 @@ const inputClass =
 
 interface CreateBiddingWizardProps {
   userPlan?: "standard" | "pro" | "enterprise";
+  initialDraft?: GridbidBidding;
 }
 
-const CreateBiddingWizard: React.FC<CreateBiddingWizardProps> = ({ userPlan }) => {
+const CreateBiddingWizard: React.FC<CreateBiddingWizardProps> = ({ userPlan, initialDraft }) => {
   const navigate = useGridbidUiStore((s) => s.navigate);
   const service = useGridbidService();
-  const [step, setStep] = useState(0);
-  const [draft, setDraft] = useState<CreateDraftInput>(DEFAULT_DRAFT);
+  const [step, setStep] = useState(initialDraft?.wizardStep ?? 0);
+  const [draft, setDraft] = useState<CreateDraftInput>(
+    initialDraft
+      ? {
+          title: initialDraft.title,
+          address: initialDraft.address,
+          websiteUrl: initialDraft.websiteUrl,
+          imageUrl: initialDraft.imageUrl,
+          processType: initialDraft.processType,
+          priceDisplay: initialDraft.priceDisplay,
+          richtpreis: initialDraft.richtpreis ?? undefined,
+          listingPrice: initialDraft.listingPrice ?? undefined,
+          deadline: initialDraft.deadline,
+          roundsPlanned: initialDraft.roundsPlanned,
+          biddingRules: initialDraft.biddingRules,
+          documents: initialDraft.documents,
+        }
+      : DEFAULT_DRAFT
+  );
   const [activating, setActivating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -144,13 +162,30 @@ const CreateBiddingWizard: React.FC<CreateBiddingWizardProps> = ({ userPlan }) =
     setDraft((prev) => ({ ...prev, ...patch }));
   }
 
+  async function advanceStep(nextStep: number) {
+    if (initialDraft) {
+      try {
+        await service.updateBidding(initialDraft.id, { ...draft, wizardStep: nextStep });
+      } catch {
+        // non-blocking — step advance is local even if save fails
+      }
+    }
+    setStep(nextStep);
+  }
+
   async function persistAndActivate() {
     setActivating(true);
     setError(null);
     try {
-      const bidding = await service.createDraft(draft);
-      const activated = await service.activateBidding(bidding.id);
-      navigate("detail", activated.id);
+      if (initialDraft) {
+        await service.updateBidding(initialDraft.id, draft);
+        const activated = await service.activateBidding(initialDraft.id);
+        navigate("detail", activated.id, activated);
+      } else {
+        const bidding = await service.createDraft(draft);
+        const activated = await service.activateBidding(bidding.id);
+        navigate("detail", activated.id, activated);
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Aktivierung fehlgeschlagen");
       setActivating(false);
@@ -160,8 +195,12 @@ const CreateBiddingWizard: React.FC<CreateBiddingWizardProps> = ({ userPlan }) =
   async function persistAsDraft() {
     setError(null);
     try {
-      const bidding = await service.createDraft(draft);
-      navigate("detail", bidding.id);
+      if (initialDraft) {
+        await service.updateBidding(initialDraft.id, { ...draft, wizardStep: step });
+      } else {
+        await service.createDraft({ ...draft, wizardStep: step });
+      }
+      navigate("overview");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Speichern fehlgeschlagen");
     }
@@ -286,7 +325,7 @@ const CreateBiddingWizard: React.FC<CreateBiddingWizardProps> = ({ userPlan }) =
               draft={draft}
               onChange={patchDraft}
               onBack={() => setStep(0)}
-              onNext={() => setStep(2)}
+              onNext={() => void advanceStep(2)}
             />
           )}
           {step === 2 && (
@@ -294,7 +333,7 @@ const CreateBiddingWizard: React.FC<CreateBiddingWizardProps> = ({ userPlan }) =
               documents={draft.documents ?? DEFAULT_DOCUMENTS}
               onChange={(docs) => patchDraft({ documents: docs })}
               onBack={() => setStep(1)}
-              onNext={() => setStep(3)}
+              onNext={() => void advanceStep(3)}
             />
           )}
           {step === 3 && (
@@ -306,7 +345,7 @@ const CreateBiddingWizard: React.FC<CreateBiddingWizardProps> = ({ userPlan }) =
               termsAccepted={termsAccepted}
               onTermsChange={setTermsAccepted}
               onBack={() => setStep(2)}
-              onGoToStep={setStep}
+              onGoToStep={(s) => void advanceStep(s)}
               onDeadlineChange={(deadline) => patchDraft({ deadline })}
               onSaveAndActivate={() => void persistAndActivate()}
               onSaveAsDraft={() => void persistAsDraft()}
@@ -341,7 +380,7 @@ const CreateBiddingWizard: React.FC<CreateBiddingWizardProps> = ({ userPlan }) =
           {step === 0 && (
             <button
               type="button"
-              onClick={() => setStep(1)}
+              onClick={() => void advanceStep(1)}
               className="flex items-center gap-2 rounded-full bg-[#182024] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#2f363a]"
             >
               Weiter
@@ -351,7 +390,7 @@ const CreateBiddingWizard: React.FC<CreateBiddingWizardProps> = ({ userPlan }) =
           {step === 1 && (
             <button
               type="button"
-              onClick={() => setStep(2)}
+              onClick={() => void advanceStep(2)}
               className="flex items-center gap-2 rounded-full bg-[#182024] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#2f363a]"
             >
               Weiter
@@ -361,7 +400,7 @@ const CreateBiddingWizard: React.FC<CreateBiddingWizardProps> = ({ userPlan }) =
           {step === 2 && (
             <button
               type="button"
-              onClick={() => setStep(3)}
+              onClick={() => void advanceStep(3)}
               className="flex items-center gap-2 rounded-full bg-[#182024] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#2f363a]"
             >
               Verfahren prüfen

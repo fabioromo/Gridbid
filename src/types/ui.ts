@@ -1,4 +1,4 @@
-export type GridbidView = "overview" | "create" | "detail";
+export type GridbidView = "overview" | "create" | "edit" | "detail";
 
 export type AppMode = "agency" | "buyer";
 
