@@ -6,7 +6,7 @@ import DeadlineCell from "./DeadlineCell";
 
 // Shared grid column template — must match the header row in BiddingsOverview
 // Columns: photo+name | status | highest-bid | bids | participants | deadline | actions
-export const ROW_GRID = "grid-cols-[380px_140px_260px_88px_128px_1fr_auto]";
+export const ROW_GRID = "grid-cols-[380px_140px_260px_96px_136px_1fr_auto]";
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
 
@@ -70,7 +70,7 @@ const BiddingRow: React.FC<BiddingRowProps> = ({ bidding }) => {
           )}
         </div>
         <div className="min-w-0">
-          <p className="truncate text-base font-medium leading-6 text-[#182024]">
+          <p className={`truncate text-base font-medium leading-6 ${bidding.status === BiddingStatus.ACTIVE ? "text-[#182024]" : "text-[#73787a]"}`}>
             {bidding.title || "Unbenannt"}
           </p>
           <p className="truncate text-sm text-[#73787a]">{bidding.address || "—"}</p>
@@ -102,7 +102,7 @@ const BiddingRow: React.FC<BiddingRowProps> = ({ bidding }) => {
       {/* Col 6: Deadline — date + live countdown */}
       <DeadlineCell status={bidding.status} deadline={bidding.deadline} />
 
-      {/* Col 7: Actions — Deal Room */}
+      {/* Col 7: Actions */}
       <div className="flex items-center pr-2">
         <button
           onClick={(e) => {
@@ -111,7 +111,11 @@ const BiddingRow: React.FC<BiddingRowProps> = ({ bidding }) => {
           }}
           className="flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full bg-[#f6f6f6] px-3 text-sm font-medium text-[#182024] transition-colors hover:bg-gray-200"
         >
-          Deal Room
+          {bidding.status === BiddingStatus.DRAFT
+            ? "Fortsetzen"
+            : bidding.status === BiddingStatus.CLOSED
+            ? "Auswertung"
+            : "Deal Room"}
           <span className="text-xs">→</span>
         </button>
       </div>

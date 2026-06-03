@@ -216,7 +216,6 @@ const CreateBiddingWizard: React.FC<CreateBiddingWizardProps> = ({ userPlan }) =
             <div className="flex flex-col gap-6">
               <div>
                 <h2 className="text-xl font-bold text-[#182024]">Was sind die Objektdetails?</h2>
-                <p className="mt-0.5 text-sm text-[#73787a]">Beschreibung des Objekts…</p>
               </div>
 
               <Field label="Bezeichnung">

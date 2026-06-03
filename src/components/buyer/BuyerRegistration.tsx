@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useGridbidUiStore } from "../../store/gridbidUiStore";
 import type {
   BuyerRegistration,
@@ -484,7 +484,10 @@ const BuyerRegistration: React.FC = () => {
 
   const [errors1, setErrors1] = useState<Step1Errors>({});
   const [errors2, setErrors2] = useState<Step2Errors>({});
+  const [step2Submitted, setStep2Submitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const firstErrorRef = useRef<HTMLParagraphElement | null>(null);
 
   const phoneEntered = !!step1.phone.trim();
   const step2Complete = !!step2.financingStatus && !!step2.purchaseTiming;
@@ -502,14 +505,20 @@ const BuyerRegistration: React.FC = () => {
 
   function handleBack() {
     if (step === 1) navigateBuyer("public");
-    else setStep(1);
+    else { setStep2Submitted(false); setStep(1); }
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setStep2Submitted(true);
     const errs = validateStep2(step2);
     setErrors2(errs);
-    if (hasErrors(errs) || !step2.financingStatus || !step2.purchaseTiming) return;
+    if (hasErrors(errs) || !step2.financingStatus || !step2.purchaseTiming) {
+      setTimeout(() => {
+        firstErrorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 0);
+      return;
+    }
 
     setIsSubmitting(true);
     const reg: BuyerRegistration = {
@@ -727,8 +736,8 @@ const BuyerRegistration: React.FC = () => {
                       </label>
                     ))}
                   </div>
-                  {errors2.financingStatus && (
-                    <p className="mt-2 text-xs text-red-500">{errors2.financingStatus}</p>
+                  {step2Submitted && errors2.financingStatus && (
+                    <p ref={firstErrorRef} className="mt-2 text-xs text-red-500">{errors2.financingStatus}</p>
                   )}
                 </div>
 
@@ -757,8 +766,8 @@ const BuyerRegistration: React.FC = () => {
                       </label>
                     ))}
                   </div>
-                  {errors2.purchaseTiming && (
-                    <p className="mt-2 text-xs text-red-500">{errors2.purchaseTiming}</p>
+                  {step2Submitted && errors2.purchaseTiming && (
+                    <p ref={!errors2.financingStatus ? firstErrorRef : undefined} className="mt-2 text-xs text-red-500">{errors2.purchaseTiming}</p>
                   )}
                 </div>
 
@@ -849,8 +858,8 @@ const BuyerRegistration: React.FC = () => {
                       von Gridbid zu.
                     </p>
                   </label>
-                  {errors2.termsAccepted && (
-                    <p className="mt-1.5 text-xs text-red-500">{errors2.termsAccepted}</p>
+                  {step2Submitted && errors2.termsAccepted && (
+                    <p ref={!errors2.financingStatus && !errors2.purchaseTiming ? firstErrorRef : undefined} className="mt-1.5 text-xs text-red-500">{errors2.termsAccepted}</p>
                   )}
                 </div>
 

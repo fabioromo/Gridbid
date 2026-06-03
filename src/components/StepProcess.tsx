@@ -349,22 +349,122 @@ const StepProcess: React.FC<StepProcessProps> = ({ draft, onChange, onBack, onNe
           </div>
         </div>
 
-        {/* Rundenanzahl */}
-        <div className="flex flex-col gap-2">
-          <span className="flex items-center gap-1.5">
-            <p className="text-xs font-medium text-zinc-500">Rundenanzahl</p>
-            <InfoTooltip text="Mehr Runden erhöhen den Wettbewerb, verlängern aber auch den Prozess." />
-          </span>
+        {/* Zeitplan: Rundenanzahl + Angebotsfrist */}
+        <div className="flex flex-col gap-4">
+          <p className="text-xs font-medium text-zinc-500">Zeitplan</p>
+
+          {/* Rundenanzahl */}
           <div className="flex flex-col gap-2">
-            {ROUNDS_OPTIONS.map(({ value, label, description }) => (
-              <RadioOption
-                key={value}
-                selected={rounds === value}
-                label={label}
-                description={description}
-                onClick={() => onChange({ roundsPlanned: value })}
-              />
-            ))}
+            <span className="flex items-center gap-1.5">
+              <p className="text-xs font-medium text-zinc-500">Rundenanzahl</p>
+              <InfoTooltip text="Mehr Runden erhöhen den Wettbewerb, verlängern aber auch den Prozess." />
+            </span>
+            <div className="flex flex-col gap-2">
+              {ROUNDS_OPTIONS.map(({ value, label, description }) => (
+                <RadioOption
+                  key={value}
+                  selected={rounds === value}
+                  label={label}
+                  description={description}
+                  onClick={() => onChange({ roundsPlanned: value })}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Angebotsfrist */}
+          <div className="flex flex-col gap-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-zinc-700">Angebotsfrist</p>
+                <p className="mt-0.5 text-xs text-zinc-500">
+                  Ohne Frist können Angebote unbegrenzt eingehen.
+                </p>
+              </div>
+              <button
+                role="switch"
+                aria-checked={deadlineEnabled}
+                onClick={() => handleDeadlineToggle(!deadlineEnabled)}
+                className={`relative mt-0.5 inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ${
+                  deadlineEnabled ? "bg-zinc-900" : "bg-zinc-300"
+                }`}
+              >
+                <span
+                  className={`mt-0.5 inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                    deadlineEnabled ? "translate-x-5" : "translate-x-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {deadlineEnabled && (
+              <div className="flex gap-4">
+                {/* Date input */}
+                <div className="flex flex-col gap-1.5 flex-1">
+                  <label className="text-sm font-medium text-zinc-700">Datum</label>
+                  <div className="relative flex items-center rounded border border-zinc-200 bg-white px-3 h-10">
+                    <svg
+                      className="mr-2 h-4 w-4 shrink-0 text-zinc-400"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <rect x="1" y="2.5" width="14" height="12.5" rx="1" stroke="currentColor" strokeWidth="1.2" />
+                      <path d="M1 6.5H15" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                      <path d="M5 1V4M11 1V4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                    </svg>
+                    <input
+                      type="date"
+                      value={draft.deadline ? new Date(draft.deadline).toISOString().slice(0, 10) : ""}
+                      onChange={(e) => {
+                        const time = draft.deadline
+                          ? new Date(draft.deadline).toTimeString().slice(0, 5)
+                          : "17:00";
+                        onChange({
+                          deadline: e.target.value
+                            ? new Date(`${e.target.value}T${time}`).toISOString()
+                            : null,
+                        });
+                      }}
+                      className="flex-1 bg-transparent text-sm text-zinc-900 placeholder-zinc-300 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Time input */}
+                <div className="flex flex-col gap-1.5 w-40">
+                  <label className="text-sm font-medium text-zinc-700">Uhrzeit</label>
+                  <div className="relative flex items-center rounded border border-zinc-200 bg-white px-3 h-10">
+                    <svg
+                      className="mr-2 h-4 w-4 shrink-0 text-zinc-400"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.2" />
+                      <path d="M8 4.5V8.5L10.5 10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <input
+                      type="time"
+                      value={
+                        draft.deadline ? new Date(draft.deadline).toTimeString().slice(0, 5) : "17:00"
+                      }
+                      onChange={(e) => {
+                        const date = draft.deadline
+                          ? new Date(draft.deadline).toISOString().slice(0, 10)
+                          : new Date().toISOString().slice(0, 10);
+                        onChange({
+                          deadline: e.target.value
+                            ? new Date(`${date}T${e.target.value}`).toISOString()
+                            : null,
+                        });
+                      }}
+                      className="flex-1 bg-transparent text-sm text-zinc-900 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -425,104 +525,6 @@ const StepProcess: React.FC<StepProcessProps> = ({ draft, onChange, onBack, onNe
       {/* ── Divider ───────────────────────────────────────────────────────────── */}
       <div className="h-px bg-zinc-100" />
 
-      {/* ── Angebotsfrist ─────────────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-4">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-lg font-bold text-zinc-900">Angebotsfrist</p>
-            <p className="mt-0.5 text-sm text-zinc-500">
-              Ohne Frist können Angebote unbegrenzt eingehen.
-            </p>
-          </div>
-          <button
-            role="switch"
-            aria-checked={deadlineEnabled}
-            onClick={() => handleDeadlineToggle(!deadlineEnabled)}
-            className={`relative mt-0.5 inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ${
-              deadlineEnabled ? "bg-zinc-900" : "bg-zinc-300"
-            }`}
-          >
-            <span
-              className={`mt-0.5 inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
-                deadlineEnabled ? "translate-x-5" : "translate-x-0.5"
-              }`}
-            />
-          </button>
-        </div>
-
-        {deadlineEnabled && (
-          <div className="flex gap-4">
-            {/* Date input */}
-            <div className="flex flex-col gap-1.5 flex-1">
-              <label className="text-sm font-medium text-zinc-700">Datum</label>
-              <div className="relative flex items-center rounded border border-zinc-200 bg-white px-3 h-10">
-                <svg
-                  className="mr-2 h-4 w-4 shrink-0 text-zinc-400"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <rect x="1" y="2.5" width="14" height="12.5" rx="1" stroke="currentColor" strokeWidth="1.2" />
-                  <path d="M1 6.5H15" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                  <path d="M5 1V4M11 1V4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                </svg>
-                <input
-                  type="date"
-                  value={draft.deadline ? new Date(draft.deadline).toISOString().slice(0, 10) : ""}
-                  onChange={(e) => {
-                    const time = draft.deadline
-                      ? new Date(draft.deadline).toTimeString().slice(0, 5)
-                      : "17:00";
-                    onChange({
-                      deadline: e.target.value
-                        ? new Date(`${e.target.value}T${time}`).toISOString()
-                        : null,
-                    });
-                  }}
-                  className="flex-1 bg-transparent text-sm text-zinc-900 placeholder-zinc-300 focus:outline-none"
-                />
-              </div>
-            </div>
-
-            {/* Time input */}
-            <div className="flex flex-col gap-1.5 w-40">
-              <label className="text-sm font-medium text-zinc-700">Uhrzeit</label>
-              <div className="relative flex items-center rounded border border-zinc-200 bg-white px-3 h-10">
-                <svg
-                  className="mr-2 h-4 w-4 shrink-0 text-zinc-400"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.2" />
-                  <path d="M8 4.5V8.5L10.5 10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <input
-                  type="time"
-                  value={
-                    draft.deadline ? new Date(draft.deadline).toTimeString().slice(0, 5) : "17:00"
-                  }
-                  onChange={(e) => {
-                    const date = draft.deadline
-                      ? new Date(draft.deadline).toISOString().slice(0, 10)
-                      : new Date().toISOString().slice(0, 10);
-                    onChange({
-                      deadline: e.target.value
-                        ? new Date(`${date}T${e.target.value}`).toISOString()
-                        : null,
-                    });
-                  }}
-                  className="flex-1 bg-transparent text-sm text-zinc-900 focus:outline-none"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ── Divider ───────────────────────────────────────────────────────────── */}
-      <div className="h-px bg-zinc-100" />
-
       {/* ── Informationen für Interessenten ──────────────────────────────────── */}
       <div className="flex flex-col gap-3">
         <div>
@@ -535,9 +537,7 @@ const StepProcess: React.FC<StepProcessProps> = ({ draft, onChange, onBack, onNe
           value={draft.biddingRules ?? ""}
           onChange={(e) => onChange({ biddingRules: e.target.value })}
           rows={4}
-          placeholder={
-            "z. B. «Bitte reichen Sie Ihr Angebot bis Freitag, 14. Februar um 17:00 Uhr ein.»\n«Besichtigungen finden am Samstag, 15. Februar zwischen 10:00 und 12:00 Uhr statt.»"
-          }
+          placeholder="z. B. «Besichtigung: Sa 14. Juni, 10–12 Uhr»"
           className="w-full resize-none rounded border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 transition-colors focus:border-zinc-400 focus:outline-none"
         />
       </div>

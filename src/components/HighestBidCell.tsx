@@ -49,11 +49,17 @@ const HighestBidCell: React.FC<HighestBidCellProps> = ({ bidding }) => {
 
   const topBid = getTopBid(offers, participants);
 
-  // ACTIVE with no bids yet
+  // ACTIVE / no bids yet → show hint instead of bare dash
   if (!topBid) {
+    const isActiveLike =
+      status === BiddingStatus.ACTIVE;
     return (
       <div className="flex items-center relative px-6 py-3 before:absolute before:left-0 before:top-1/2 before:h-8 before:w-px before:-translate-y-1/2 before:bg-gray-200 before:content-['']">
-        <span className="text-sm text-[#73787a]">—</span>
+        {isActiveLike ? (
+          <span className="text-[12px] text-[#73787a]">Noch keine Gebote</span>
+        ) : (
+          <span className="text-sm text-[#73787a]">—</span>
+        )}
       </div>
     );
   }
