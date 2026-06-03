@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   BiddingStatus,
   PriceDisplay,
@@ -592,7 +592,19 @@ function AngeboteTab({
 
       {/* ── Section 4: Order book ── */}
       <div style={{ paddingTop: 24 }}>
-        <div style={{ ...T.label, marginBottom: 12 }}>ANGEBOTSÜBERSICHT</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <span style={T.label}>ANGEBOTSÜBERSICHT</span>
+          {uniqueBids.length >= 2 && (() => {
+            const spread = Math.max(...uniqueBids.map((b) => b.amount)) - Math.min(...uniqueBids.map((b) => b.amount));
+            return (
+              <>
+                <span style={{ fontSize: 11, color: C.textSubtle }}>·</span>
+                <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: C.textSubtle }}>Spanne</span>
+                <span style={{ fontFamily: "DM Mono, monospace", fontSize: 13, fontWeight: 500, color: C.textDefault }}>{formatCHF(spread)}</span>
+              </>
+            );
+          })()}
+        </div>
 
         {/* Evaluation bar */}
         {showEvalBar && uniqueBids.length > 0 && (
@@ -722,14 +734,14 @@ function AngeboteTab({
                     <div style={{ background: C.bgSurface, borderRadius: C.radiusMd, padding: "12px 16px", margin: "0 0 8px 0", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
                       {/* Left: contact */}
                       <div>
-                        {buyer?.phone && (
-                          <a href={`tel:${buyer.phone}`} style={{ display: "block", fontSize: 13, color: C.textInfo, textDecoration: "none", marginBottom: 4 }}>
-                            {buyer.phone}
-                          </a>
-                        )}
                         {buyer && (
                           <a href={`mailto:${buyer.email}`} style={{ display: "block", fontSize: 13, color: C.textInfo, textDecoration: "none", marginBottom: 4 }}>
                             {buyer.email}
+                          </a>
+                        )}
+                        {buyer?.phone && (
+                          <a href={`tel:${buyer.phone}`} style={{ display: "block", fontSize: 13, color: C.textInfo, textDecoration: "none", marginBottom: 4 }}>
+                            {buyer.phone}
                           </a>
                         )}
                         {buyer && (
@@ -889,9 +901,16 @@ const LEVEL_ACCENT: Record<1 | 2 | 3, string> = {
 };
 
 function DokumenteTab({ bidding, buyers, onBiddingChange }: DokumenteTabProps) {
-  const [uploadModal, setUploadModal] = useState<1 | 2 | 3 | null>(null);
-  const [uploadTitle, setUploadTitle] = useState("");
   const [freigabeState, setFreigabeState] = useState<Record<string, FreigabeEntry>>({});
+  const [toast, setToast] = useState<string | null>(null);
+  const [level3ExtraAccess, setLevel3ExtraAccess] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadLevel, setUploadLevel] = useState<1 | 2 | 3 | null>(null);
+
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2500);
+  }
 
   const level2BuyerCount = buyers.filter((b) => !!(b.phone)).length;
 
@@ -905,7 +924,7 @@ function DokumenteTab({ bidding, buyers, onBiddingChange }: DokumenteTabProps) {
   }> = [
     { num: 1, label: "Level 1", desc: "Alle registrierten Interessent:innen", accessCount: buyers.length, locked: false, docs: bidding.documents.level1 },
     { num: 2, label: "Level 2", desc: "Verifizierte Käufer:innen (Telefon bestätigt)", accessCount: level2BuyerCount, locked: false, docs: bidding.documents.level2 },
-    { num: 3, label: "Level 3", desc: "Manuelle Freigabe — vertrauliche Unterlagen", accessCount: 0, locked: true, docs: bidding.documents.level3 },
+    { num: 3, label: "Level 3", desc: "Manuelle Freigabe — vertrauliche Unterlagen", accessCount: level3ExtraAccess, locked: true, docs: bidding.documents.level3 },
   ];
 
   function addDocument(level: 1 | 2 | 3, title: string) {
@@ -925,12 +944,12 @@ function DokumenteTab({ bidding, buyers, onBiddingChange }: DokumenteTabProps) {
     setFreigabeState((prev) => ({ ...prev, [key]: { buyerId, confirming: false } }));
   }
 
-  function confirmFreigabe(key: string, docTitle: string) {
+  function confirmFreigabe(key: string) {
     const entry = freigabeState[key];
     if (!entry) return;
-    const buyer = buyers.find((b) => b.id === entry.buyerId);
-    if (buyer) console.log("Freigabe:", docTitle, buyer.name);
     setFreigabeState((prev) => { const next = { ...prev }; delete next[key]; return next; });
+    setLevel3ExtraAccess((n) => n + 1);
+    showToast("Dokument freigegeben.");
   }
 
   return (
@@ -960,7 +979,7 @@ function DokumenteTab({ bidding, buyers, onBiddingChange }: DokumenteTabProps) {
             {!lvl.locked && (
               <button
                 style={{ ...btn.secondarySm, display: "flex", alignItems: "center", gap: 6 }}
-                onClick={() => { setUploadTitle(""); setUploadModal(lvl.num); }}
+                onClick={() => { setUploadLevel(lvl.num); fileInputRef.current?.click(); }}
               >
                 <IconUpload />
                 Hochladen
@@ -1006,14 +1025,14 @@ function DokumenteTab({ bidding, buyers, onBiddingChange }: DokumenteTabProps) {
                                 <option key={b.id} value={b.id}>{b.name}</option>
                               ))}
                             </select>
-                            <button style={btn.primarySm} onClick={() => confirmFreigabe(fKey, doc)}>
-                              Bestätigen
+                            <button style={btn.primarySm} onClick={() => confirmFreigabe(fKey)}>
+                              Freigeben
                             </button>
                             <button
                               style={{ ...btn.ghostSm, color: C.textSubtle }}
                               onClick={() => setFreigabeState((prev) => { const next = { ...prev }; delete next[fKey]; return next; })}
                             >
-                              Abbrechen
+                              ×
                             </button>
                           </div>
                         )}
@@ -1027,46 +1046,31 @@ function DokumenteTab({ bidding, buyers, onBiddingChange }: DokumenteTabProps) {
         </div>
       ))}
 
-      {uploadModal !== null && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.4)" }}>
-          <div style={{ width: "100%", maxWidth: 384, borderRadius: C.radiusLg, background: C.bgPage, border: `1px solid ${C.mono100}`, padding: 24, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
-            <h2 style={{ marginBottom: 16, fontSize: 18, fontWeight: 700, color: C.textDark }}>
-              Dokument zu Level {uploadModal} hinzufügen
-            </h2>
-            <input
-              autoFocus
-              type="text"
-              value={uploadTitle}
-              onChange={(e) => setUploadTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && uploadTitle.trim()) {
-                  addDocument(uploadModal, uploadTitle.trim());
-                  setUploadModal(null);
-                }
-              }}
-              placeholder="Dateiname, z.B. Grundriss_EG.pdf"
-              style={{ width: "100%", borderRadius: C.radiusMd, border: `1px solid ${C.mono300}`, padding: "8px 12px", fontSize: 13, color: C.textDefault, outline: "none", boxSizing: "border-box" }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = C.textInfo)}
-              onBlur={(e) => (e.currentTarget.style.borderColor = C.mono300)}
-            />
-            <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end", gap: 8 }}>
-              <button style={btn.secondarySm} onClick={() => setUploadModal(null)}>
-                Abbrechen
-              </button>
-              <button
-                style={{ ...btn.primarySm, opacity: uploadTitle.trim() ? 1 : 0.4 }}
-                disabled={!uploadTitle.trim()}
-                onClick={() => {
-                  if (uploadTitle.trim()) {
-                    addDocument(uploadModal, uploadTitle.trim());
-                    setUploadModal(null);
-                  }
-                }}
-              >
-                Hinzufügen
-              </button>
-            </div>
-          </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf"
+        style={{ display: "none" }}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file && uploadLevel !== null) {
+            addDocument(uploadLevel, file.name);
+            showToast("Dokument hochgeladen.");
+          }
+          e.target.value = "";
+          setUploadLevel(null);
+        }}
+      />
+
+      {toast !== null && (
+        <div style={{
+          position: "fixed", bottom: 24, right: 24, zIndex: 60,
+          background: C.textDark, color: C.textWhite,
+          borderRadius: C.radiusMd, padding: "10px 16px",
+          fontSize: 13, fontWeight: 500,
+          boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+        }}>
+          {toast}
         </div>
       )}
     </div>
