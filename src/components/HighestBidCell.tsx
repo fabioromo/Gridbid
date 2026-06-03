@@ -73,11 +73,11 @@ const HighestBidCell: React.FC<HighestBidCellProps> = ({ bidding }) => {
     <div className="flex flex-col justify-center relative px-6 py-3 before:absolute before:left-0 before:top-1/2 before:h-8 before:w-px before:-translate-y-1/2 before:bg-gray-200 before:content-['']">
       {/* Line 1: amount — bidder name */}
       <div className="flex items-center gap-1.5 text-sm">
-        <span className="font-medium tabular-nums text-[#2f363a]">
+        <span className="shrink-0 whitespace-nowrap font-medium tabular-nums text-[#2f363a]">
           {formatCHF(topBid.amount)}
         </span>
-        <span className="text-[#73787a]">–</span>
-        <span className="truncate text-[#73787a]">{topBid.name}</span>
+        <span className="shrink-0 text-[#73787a]">–</span>
+        <span className="min-w-0 truncate text-[#73787a]">{topBid.name}</span>
       </div>
 
       {/* Line 2: delta vs. reference price */}
