@@ -78,6 +78,7 @@ export const mockBidding: WorkspaceBidding = {
   winnerId: null,
   winnerName: null,
   finalPrice: null,
+  smartMatching: true,
   participants: [
     { id: "buyer-1", name: "Anna Müller",   email: "anna.mueller@example.com",  registeredAt: "2025-05-01T10:30:00Z" },
     { id: "buyer-2", name: "Beat Keller",   email: "beat.keller@example.com",   registeredAt: "2025-05-03T14:00:00Z" },

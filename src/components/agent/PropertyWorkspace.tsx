@@ -14,6 +14,7 @@ import {
   formatTimeRemaining,
 } from "../../utils/labels";
 import { AvatarDropdown } from "../AvatarDropdown";
+import smartMatchingIllustration from "../../assets/smart-matching.svg";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 
@@ -79,7 +80,7 @@ const T = {
   body:    { fontSize: 13, color: C.textDefault },
   meta:    { fontSize: 12, color: C.textSubtle },
   heading: { color: C.textDark },
-  mono:    { fontFamily: "DM Mono, monospace", color: C.textDark },
+  mono:    { color: C.textDark },
 };
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -175,6 +176,15 @@ function IconInfo() {
   );
 }
 
+function IconShieldCheck({ color }: { color: string }) {
+  return (
+    <svg width="11" height="12" viewBox="0 0 11 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5.5 1L10 2.8V6C10 8.8 8 10.6 5.5 11.5C3 10.6 1 8.8 1 6V2.8L5.5 1Z" fill={color} fillOpacity="0.18" stroke={color} strokeWidth="0.9" strokeLinejoin="round" />
+      <path d="M3.5 6L4.8 7.3L7.5 4.5" stroke={color} strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function IconExternalLink() {
   return (
     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
@@ -239,6 +249,14 @@ function IconTablerArrowRight() {
 
 function fmtDT(iso: string): string {
   return new Date(iso).toLocaleString("de-CH", { dateStyle: "short", timeStyle: "short" });
+}
+
+function fmtDateLong(iso: string): string {
+  return new Date(iso).toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" });
+}
+
+function fmtTimeOnly(iso: string): string {
+  return new Date(iso).toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });
 }
 
 function priceDisplayLabel(pd: PriceDisplay): string {
@@ -510,63 +528,57 @@ function AngeboteTab({
         .gridbid-pulse { animation: gridbid-pulse 1.5s ease-in-out infinite; }
       `}</style>
 
-      {/* ── Section 1: Hero number ── */}
-      <div style={{ paddingBottom: 24, borderBottom: `1px solid ${C.mono100}` }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24 }}>
+      {/* ── Section 1: Stats row ── */}
+      <div style={{ border: "1px solid #E8E9E9", borderRadius: C.radiusMd, background: C.bgPage, padding: "22px 28px", marginBottom: 0 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 0 }}>
 
-          {/* Left: highest bid */}
-          <div>
-            <div style={{ ...T.label, marginBottom: 6 }}>HÖCHSTGEBOT</div>
-            <div style={{ fontFamily: "DM Mono, monospace", fontSize: 36, fontWeight: 500, color: C.textDark, lineHeight: 1 }}>
+          {/* Col 1: Highest bid */}
+          <div style={{ paddingRight: 20, borderRight: "1px solid #E8E9E9" }}>
+            <div style={{ fontSize: 11, fontWeight: 500, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "#73787A", marginBottom: 6 }}>Höchstgebot</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: "#4782F3", lineHeight: 1, whiteSpace: "nowrap" }}>
               {topBid ? formatCHF(topBid.amount) : "—"}
             </div>
             {topBuyerName && (
-              <div style={{ marginTop: 4, fontSize: 13, color: C.textSubtle }}>{topBuyerName}</div>
+              <div style={{ marginTop: 4, fontSize: 12, color: C.textSubtle }}>{topBuyerName}</div>
             )}
           </div>
 
-          {/* Center: list price delta */}
-          {listPrice != null && listPrice > 0 && delta != null && (
-            <div style={{ textAlign: "center", flex: 1, minWidth: 0 }}>
-              <div style={{ ...T.label, marginBottom: 4 }}>DIFFERENZ ZUM LISTENPREIS</div>
-              <div style={{ fontFamily: "DM Mono, monospace", fontSize: 16, fontWeight: 500, color: delta >= 0 ? C.textSuccess : C.textError }}>
-                {delta >= 0 ? "+" : ""}{formatCHF(Math.abs(delta))}
-              </div>
-              <div style={{ fontSize: 13, color: delta >= 0 ? C.textSuccess : C.textError }}>
-                {delta >= 0 ? "+" : ""}{deltaPercent}%
-              </div>
+          {/* Col 2: Δ Listenpreis */}
+          <div style={{ padding: "0 20px", borderRight: "1px solid #E8E9E9" }}>
+            <div style={{ fontSize: 11, fontWeight: 500, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "#73787A", marginBottom: 6, display: "flex", alignItems: "center", gap: 4 }}>
+              Δ Listenpreis
+              <span style={{ color: "#73787A" }}><IconInfo /></span>
             </div>
-          )}
-
-          {/* Right: status indicator + countdown */}
-          <div style={{ textAlign: "right", flexShrink: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, marginBottom: 6 }}>
-              <div
-                className="gridbid-pulse"
-                style={{
-                  width: 7, height: 7, borderRadius: "50%",
-                  background: effectiveStatus === "active" ? C.textSuccess : effectiveStatus === "round2_active" ? VIOLET.text : C.textWarning,
-                }}
-              />
-              <span style={{ fontSize: 13, fontWeight: 500, color: effectiveStatus === "active" ? C.textSuccess : effectiveStatus === "round2_active" ? VIOLET.text : C.textWarning }}>
-                {EFFECTIVE_STATUS_LABEL[effectiveStatus]}
-              </span>
-            </div>
-            {effectiveStatus === "active" ? (
-              <div style={{ fontFamily: "DM Mono, monospace", fontSize: 22, fontWeight: 500, color: C.textDark }}>
-                {countdown}
-              </div>
-            ) : effectiveStatus === "round2_active" && bidding.round2Deadline ? (
-              <div style={{ fontFamily: "DM Mono, monospace", fontSize: 22, fontWeight: 500, color: VIOLET.text }}>
-                {formatTimeRemaining(bidding.round2Deadline)}
-              </div>
-            ) : effectiveStatus === "deadline_passed" || effectiveStatus === "round2_deadline_passed" ? (
-              <div style={{ fontSize: 13, fontWeight: 600, color: C.textWarning }}>Bereit zur Auswertung</div>
-            ) : null}
-            {bidding.deadline && (
-              <div style={{ fontSize: 12, color: C.textSubtle, marginTop: 2 }}>{fmtDT(bidding.deadline)}</div>
+            {listPrice != null && listPrice > 0 && delta != null ? (
+              <>
+                <div style={{ fontSize: 20, fontWeight: 700, color: delta >= 0 ? "#288352" : C.textError }}>
+                  {delta >= 0 ? "+" : ""}{formatCHF(Math.abs(delta))}
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: delta >= 0 ? "#288352" : C.textError, marginTop: 4 }}>
+                  {delta >= 0 ? "+" : ""}{deltaPercent}%
+                </div>
+              </>
+            ) : (
+              <div style={{ fontSize: 16, color: C.textSubtle }}>—</div>
             )}
-            <div style={{ fontSize: 11, color: C.textSubtle, marginTop: 2 }}>Zuletzt aktualisiert: vor 2 Min.</div>
+          </div>
+
+          {/* Col 3: Bid spread */}
+          <div style={{ paddingLeft: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 500, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "#73787A", marginBottom: 6, display: "flex", alignItems: "center", gap: 4 }}>
+              Gebotsstreuung
+              <span style={{ color: "#73787A" }}><IconInfo /></span>
+            </div>
+            {uniqueBids.length >= 2 ? (() => {
+              const spread = Math.max(...uniqueBids.map((b) => b.amount)) - Math.min(...uniqueBids.map((b) => b.amount));
+              return (
+                <div style={{ fontSize: 20, fontWeight: 700, color: "#182024" }}>
+                  {formatCHF(spread)}
+                </div>
+              );
+            })() : (
+              <div style={{ fontSize: 16, color: C.textSubtle }}>—</div>
+            )}
           </div>
         </div>
       </div>
@@ -585,7 +597,7 @@ function AngeboteTab({
                 : (bidding.winnerName ?? "Käufer:in unbekannt")}
             </span>
             {bidding.finalPrice != null && (
-              <span style={{ fontFamily: "DM Mono, monospace", fontSize: 18, fontWeight: 600, color: C.textSuccess }}>
+              <span style={{ fontSize: 18, fontWeight: 600, color: C.textSuccess }}>
                 {formatCHF(bidding.finalPrice)}
               </span>
             )}
@@ -608,7 +620,7 @@ function AngeboteTab({
             <div style={{ width: 7, height: 7, borderRadius: "50%", background: VIOLET.text, flexShrink: 0 }} />
             <span style={{ fontSize: 13, fontWeight: 600, color: VIOLET.text }}>Runde 2 läuft</span>
             <span style={{ fontSize: 13, color: VIOLET.text }}>·</span>
-            <span style={{ fontFamily: "DM Mono, monospace", fontSize: 13, color: VIOLET.text }}>
+            <span style={{ fontSize: 13, color: VIOLET.text }}>
               {formatTimeRemaining(bidding.round2Deadline)}
             </span>
           </div>
@@ -618,88 +630,16 @@ function AngeboteTab({
         </div>
       )}
 
-      {/* ── Section 2: Process health strip ── */}
-      <div style={{ paddingTop: 20, paddingBottom: 20, borderBottom: `1px solid ${C.mono100}` }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)" }}>
-
-          {/* Käufer:innen */}
-          <div style={{ paddingRight: 20, borderRight: `1px solid ${C.mono100}` }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-              <IconTablerUsers color={C.textInfo} />
-              <span style={T.label}>KÄUFER:INNEN</span>
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: C.textDark }}>{bidderCount} registriert</div>
-            <div style={{ fontSize: 11, color: C.textSubtle, marginTop: 1 }}>
-              {bidCount} haben geboten ({bidPercent}%)
-            </div>
-          </div>
-
-          {/* Unterlagen */}
-          <div style={{ padding: "0 20px", borderRight: `1px solid ${C.mono100}` }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-              <IconTablerFile color={docsColor} />
-              <span style={T.label}>UNTERLAGEN</span>
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: C.textDark }}>Level 1–2 freigegeben</div>
-            <div style={{ fontSize: 11, color: docsSubColor, marginTop: 1 }}>{docsSub}</div>
-          </div>
-
-          {/* Runden */}
-          <div style={{ paddingLeft: 20 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-              <IconTablerRoute color={C.textSubtle} />
-              <span style={T.label}>RUNDEN</span>
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: C.textDark }}>{roundValue}</div>
-            <div style={{ fontSize: 11, color: C.textSubtle, marginTop: 1 }}>{roundSub}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Section 3: Nächster Schritt ── */}
-      <div style={{ paddingTop: 16, paddingBottom: 20, borderBottom: `1px solid ${C.mono100}` }}>
-        <div style={{ background: C.bgSurface, borderRadius: C.radiusMd, padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-            <IconTablerArrowRight />
-            <span style={{ fontSize: 13, color: C.textDefault }}>{nextStep}</span>
-          </div>
-          {(showRound2Btn || showCloseBtn) && (
-            <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-              {showRound2Btn && (
-                <button
-                  style={{ background: VIOLET.bg, color: VIOLET.text, border: `1px solid ${VIOLET.text}40`, borderRadius: C.radiusMd, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
-                  onClick={onOpenRound2Modal}
-                >
-                  Runde 2 starten
-                </button>
-              )}
-              {showCloseBtn && (
-                <button
-                  style={btn.secondarySm}
-                  onClick={onOpenCloseWizard}
-                >
-                  Verfahren abschliessen
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* ── Section 4: Order book ── */}
       <div style={{ paddingTop: 24 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-          <span style={T.label}>ANGEBOTSÜBERSICHT</span>
-          {uniqueBids.length >= 2 && (() => {
-            const spread = Math.max(...uniqueBids.map((b) => b.amount)) - Math.min(...uniqueBids.map((b) => b.amount));
-            return (
-              <>
-                <span style={{ fontSize: 11, color: C.textSubtle }}>·</span>
-                <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: C.textSubtle }}>Spanne</span>
-                <span style={{ fontFamily: "DM Mono, monospace", fontSize: 13, fontWeight: 500, color: C.textDefault }}>{formatCHF(spread)}</span>
-              </>
-            );
-          })()}
+        <div style={{ marginBottom: 12, display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: C.textDark }}>
+            {bidderCount} Käufer:innen in dieser Runde
+          </span>
+          <span style={{ width: 1, height: 14, background: C.mono300, display: "inline-block" }} />
+          <span style={{ fontSize: 14, color: C.textSubtle }}>
+            {bidCount} haben Angebote. ({bidPercent}%)
+          </span>
         </div>
 
         {/* Evaluation bar */}
@@ -727,242 +667,256 @@ function AngeboteTab({
         )}
 
         {/* Table header */}
-        <div style={{ display: "grid", gridTemplateColumns: "32px 1fr 140px 120px 90px", gap: 16, paddingBottom: 8, borderBottom: `1px solid ${C.mono100}` }}>
-          <div style={T.label} />
+        <div style={{ display: "grid", gridTemplateColumns: "32px 1fr 160px 110px 150px", gap: 20, padding: "0 12px 10px", borderBottom: `1px solid ${C.mono100}` }}>
+          <div style={T.label}>Nr.</div>
           <div style={T.label}>BIETER:IN</div>
-          <div style={{ ...T.label, textAlign: "right" }}>ANGEBOT</div>
-          <div style={{ ...T.label, textAlign: "right" }}>VS. LISTENPREIS</div>
-          <div style={{ ...T.label, textAlign: "right" }}>FINANZIERUNG</div>
+          <div style={T.label}>GEBOT / VS. LISTENPREIS</div>
+          <div style={T.label}>RUNDE</div>
+          <div style={{ ...T.label, textAlign: "right" }}>EINGEREICHT</div>
         </div>
 
         {uniqueBids.length === 0 && noBidBuyers.length === 0 ? (
           <div style={{ padding: "40px 0", textAlign: "center", fontSize: 14, color: C.textSubtle }}>
             Noch keine Angebote eingegangen.
           </div>
-        ) : (
-          <div>
-            {/* Bidding rows */}
-            {uniqueBids.map((bid, idx) => {
-              const buyer = buyers.find((b) => b.id === bid.participantId);
-              const name = buyer?.name ?? bid.participantId;
-              const isExpanded = expandedBuyers.has(bid.participantId);
-              const allBuyerBids = propBids
-                .filter((b) => b.participantId === bid.participantId)
-                .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
-              const priorBids = allBuyerBids.filter((b) => b.id !== bid.id);
-              const level = buyer ? getBuyerQualLevel(buyer) : 1;
-              const ft = getFinancingTierFromLevel(level);
-              const isInvitedToRound2 =
-                effectiveStatus !== "round2_active" && effectiveStatus !== "round2_deadline_passed"
-                  ? true
-                  : bidding.round2InvitedBuyerIds.includes(bid.participantId);
-              const bidRound = bid.round ?? 1;
-              const bidDelta =
-                listPrice != null && listPrice > 0 ? bid.amount - listPrice : null;
-              const bidDeltaPct =
-                bidDelta != null && listPrice != null && listPrice > 0
-                  ? ((bidDelta / listPrice) * 100).toFixed(1)
-                  : null;
+        ) : (() => {
+          const inRound2 = effectiveStatus === "round2_active" || effectiveStatus === "round2_deadline_passed";
+          const invitedBidders = inRound2
+            ? uniqueBids.filter((bid) => bidding.round2InvitedBuyerIds.includes(bid.participantId))
+            : uniqueBids;
+          const notInvitedBidders = inRound2
+            ? uniqueBids.filter((bid) => !bidding.round2InvitedBuyerIds.includes(bid.participantId))
+            : [];
 
-              return (
-                <div key={bid.id} style={{ borderBottom: `1px solid ${C.mono100}`, opacity: !isInvitedToRound2 ? 0.5 : 1 }}>
-                  <div
-                    style={{ display: "grid", gridTemplateColumns: "32px 1fr 140px 120px 90px", gap: 16, padding: "16px 0", alignItems: "start", cursor: "pointer" }}
-                    onClick={() => toggleExpanded(bid.participantId)}
-                  >
-                    {/* Rank */}
-                    <div style={{
-                      width: 26, height: 26, borderRadius: "50%",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 12, fontWeight: 600,
-                      background: idx === 0 ? C.textDark : "transparent",
-                      border: idx === 0 ? "none" : `1px solid ${C.mono300}`,
-                      color: idx === 0 ? "white" : C.textSubtle,
-                    }}>
-                      {idx + 1}
-                    </div>
+          function renderBidRow(bid: GridbidOffer, idx: number, isInvited: boolean) {
+            const buyer = buyers.find((b) => b.id === bid.participantId);
+            const name = buyer?.name ?? bid.participantId;
+            const isExpanded = expandedBuyers.has(bid.participantId);
+            const allBuyerBids = propBids
+              .filter((b) => b.participantId === bid.participantId)
+              .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+            const priorBids = allBuyerBids.filter((b) => b.id !== bid.id);
+            const level = buyer ? getBuyerQualLevel(buyer) : 1;
+            const ft = getFinancingTierFromLevel(level);
+            const bidRound = bid.round ?? 1;
+            const bidDelta = listPrice != null && listPrice > 0 ? bid.amount - listPrice : null;
+            const bidDeltaPct =
+              bidDelta != null && listPrice != null && listPrice > 0
+                ? ((bidDelta / listPrice) * 100).toFixed(1)
+                : null;
 
-                    {/* Buyer */}
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <div style={{ fontSize: 14, fontWeight: 500, color: C.textDark }}>{name}</div>
-                        {(effectiveStatus === "round2_active" || effectiveStatus === "round2_deadline_passed") && (
-                          <span style={
-                            bidRound === 2
-                              ? { background: VIOLET.bg, color: VIOLET.text, borderRadius: C.radiusMd, padding: "1px 6px", fontSize: 10, fontWeight: 700 }
-                              : { ...badge.neutral, padding: "1px 6px", fontSize: 10, fontWeight: 700 }
-                          }>
-                            {bidRound === 2 ? "R2" : "R1"}
-                          </span>
-                        )}
-                        {!isInvitedToRound2 && (
-                          <span style={{ ...badge.neutral, fontSize: 10 }}>Nicht eingeladen</span>
-                        )}
-                      </div>
-                      {buyer && <div style={{ fontSize: 12, color: C.textSubtle, marginTop: 1 }}>{buyer.email}</div>}
-                      <div style={{ marginTop: 4, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-                        <span style={ft.style}>{ft.label}</span>
-                        <span style={badge.neutral}>Level {level}</span>
-                      </div>
-                      {level < 3 && (
-                        <div style={{ fontSize: 11, color: C.textSubtle, marginTop: 3 }}>Selbstdeklariert</div>
-                      )}
-                    </div>
-
-                    {/* Amount */}
-                    <div style={{ textAlign: "right" }}>
-                      {isInvitedToRound2 ? (
-                        <>
-                          <div style={{ fontFamily: "DM Mono, monospace", fontSize: 16, fontWeight: 500, color: idx === 0 ? C.textInfo : C.textDark }}>
-                            {formatCHF(bid.amount)}
-                          </div>
-                          <div style={{ fontFamily: "DM Mono, monospace", fontSize: 11, color: C.textSubtle, marginTop: 2 }}>
-                            {fmtDT(bid.submittedAt)}
-                          </div>
-                        </>
-                      ) : (
-                        <span style={{ fontSize: 13, color: C.textSubtle }}>—</span>
-                      )}
-                    </div>
-
-                    {/* Delta */}
-                    <div style={{ textAlign: "right" }}>
-                      {bidDelta != null ? (
-                        <>
-                          <div style={{ fontFamily: "DM Mono, monospace", fontSize: 13, color: bidDelta >= 0 ? C.textSuccess : C.textError }}>
-                            {bidDelta >= 0 ? "+" : ""}{formatCHF(Math.abs(bidDelta))}
-                          </div>
-                          <div style={{ fontSize: 11, color: bidDelta >= 0 ? C.textSuccess : C.textError, marginTop: 1 }}>
-                            {bidDelta >= 0 ? "+" : ""}{bidDeltaPct}%
-                          </div>
-                        </>
-                      ) : (
-                        <span style={{ color: C.textSubtle }}>—</span>
-                      )}
-                    </div>
-
-                    {/* Financing + chevron */}
-                    <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-                      <span style={ft.style}>{ft.label}</span>
-                      <div style={{ color: C.textSubtle }}>
-                        <IconChevronDown open={isExpanded} />
-                      </div>
-                    </div>
+            const isHighest = idx === 0 && isInvited;
+            return (
+              <div key={bid.id} style={{ borderBottom: `1px solid ${C.mono100}`, background: isHighest ? "#F0F6FF" : "transparent" }}>
+                <div
+                  style={{ display: "grid", gridTemplateColumns: "32px 1fr 160px 110px 150px", gap: 20, padding: "18px 12px", alignItems: "start", cursor: "pointer" }}
+                  onClick={() => toggleExpanded(bid.participantId)}
+                >
+                  {/* Rank */}
+                  <div style={{
+                    width: 26, height: 26, borderRadius: "50%",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 12, fontWeight: 600,
+                    background: isHighest ? C.textDark : "transparent",
+                    border: isHighest ? "none" : `1px solid ${C.mono300}`,
+                    color: isHighest ? "white" : C.textSubtle,
+                  }}>
+                    {idx + 1}
                   </div>
 
-                  {/* Expanded detail panel */}
-                  {isExpanded && (
-                    <div style={{ background: C.bgSurface, borderRadius: C.radiusMd, padding: "12px 16px", margin: "0 0 8px 0", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
-                      {/* Left: contact */}
+                  {/* BIETER:IN — name + verification + email only */}
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                      <div style={{ fontSize: 14, fontWeight: 500, color: C.textDark }}>{name}</div>
+                      {(() => {
+                        const lvlStyle: Record<1|2|3, { bg: string; border: string; color: string }> = {
+                          1: { bg: "#FBF2EA", border: "#F0D5B0", color: "#B56100" },
+                          2: { bg: "#EDF2FE", border: "#B8CCF5", color: "#3968C2" },
+                          3: { bg: "#EAF3EE", border: "#A3D5B8", color: "#288352" },
+                        };
+                        const s = lvlStyle[level];
+                        return (
+                          <span style={{ background: s.bg, border: `1px solid ${s.border}`, borderRadius: 4, padding: "1px 6px", fontSize: 11, fontWeight: 600, color: s.color, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                            <IconShieldCheck color={s.color} />
+                            {level}
+                          </span>
+                        );
+                      })()}
+                      {isHighest && (
+                        <span style={{ background: "#4782F3", color: "#fff", borderRadius: 20, padding: "2px 9px", fontSize: 11, fontWeight: 600 }}>
+                          Höchstgebot
+                        </span>
+                      )}
+                    </div>
+                    {buyer && <div style={{ fontSize: 12, color: C.textSubtle, marginTop: 2 }}>{buyer.email}</div>}
+                  </div>
+
+                  {/* BID / VS. LIST PRICE */}
+                  <div>
+                    <div style={{ fontSize: 16, fontWeight: 600, color: isHighest ? "#4782F3" : C.textDark }}>
+                      {formatCHF(bid.amount)}
+                    </div>
+                    {bidDelta != null ? (
+                      <div style={{ fontSize: 12, color: bidDelta >= 0 ? "#288352" : C.textError, marginTop: 2 }}>
+                        {bidDelta >= 0 ? "+" : ""}{formatCHF(Math.abs(bidDelta))}, {bidDelta >= 0 ? "+" : ""}{bidDeltaPct}%
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: 12, color: C.textSubtle, marginTop: 2 }}>—</div>
+                    )}
+                  </div>
+
+                  {/* ROUND */}
+                  <div>
+                    <span style={{ display: "inline-block", border: `1px solid ${C.mono100}`, borderRadius: 20, padding: "3px 12px", fontSize: 13, color: C.textDark, background: C.bgPage, whiteSpace: "nowrap" }}>
+                      Runde {bidRound}
+                    </span>
+                  </div>
+
+                  {/* SUBMITTED + chevron */}
+                  <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                    <div style={{ fontSize: 13, color: C.textDark }}>{fmtDateLong(bid.submittedAt)}</div>
+                    <div style={{ fontSize: 12, color: C.textSubtle }}>{fmtTimeOnly(bid.submittedAt)}</div>
+                    <div style={{ color: C.textSubtle, marginTop: 2 }}>
+                      <IconChevronDown open={isExpanded} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expanded detail panel — columns aligned to table grid */}
+                {isExpanded && (
+                  <div style={{ background: C.bgSurface, borderRadius: C.radiusMd, padding: "16px 12px", margin: "0 0 8px 0" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "32px 1fr 160px 110px 150px", gap: 20, alignItems: "start" }}>
+                      {/* Spacer for rank col */}
+                      <div />
+
+                      {/* DETAILS — under BIETER:IN */}
                       <div>
+                        <div style={{ ...T.label, marginBottom: 10 }}>ANGABEN</div>
                         {buyer && (
-                          <a href={`mailto:${buyer.email}`} style={{ display: "block", fontSize: 13, color: C.textInfo, textDecoration: "none", marginBottom: 4 }}>
+                          <a href={`mailto:${buyer.email}`} style={{ display: "block", fontSize: 13, color: C.textDefault, textDecoration: "none", marginBottom: 4 }}>
                             {buyer.email}
                           </a>
                         )}
                         {buyer?.phone && (
-                          <a href={`tel:${buyer.phone}`} style={{ display: "block", fontSize: 13, color: C.textInfo, textDecoration: "none", marginBottom: 4 }}>
-                            {buyer.phone}
-                          </a>
+                          <div style={{ fontSize: 13, color: C.textDefault, marginBottom: 4 }}>{buyer.phone}</div>
                         )}
                         {buyer && (
-                          <div style={{ fontSize: 12, color: C.textSubtle, marginBottom: 4 }}>
-                            Registriert {new Date(buyer.registeredAt).toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" })}
+                          <div style={{ fontSize: 13, color: C.textSubtle, marginTop: 2 }}>
+                            Registriert: {new Date(buyer.registeredAt).toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" })}
                           </div>
-                        )}
-                        {buyer?.offmarketOptIn && (
-                          <span style={badge.neutral}>Off-Market</span>
                         )}
                       </div>
 
-                      {/* Right: bid history */}
-                      <div>
-                        <div style={{ ...T.label, marginBottom: 6 }}>FRÜHERE GEBOTE</div>
+                      {/* PREVIOUS BIDS — spans cols 3-5, sub-grid matches BID / ROUND / SUBMITTED */}
+                      <div style={{ gridColumn: "3 / 6" }}>
+                        <div style={{ ...T.label, marginBottom: 10 }}>FRÜHERE GEBOTE</div>
                         {priorBids.length > 0 ? (
                           priorBids.map((pb) => (
-                            <div key={pb.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "3px 0" }}>
-                              <span style={{ fontFamily: "DM Mono, monospace", fontSize: 13, color: C.textSubtle }}>{formatCHF(pb.amount)}</span>
-                              <span style={{ ...badge.neutral, fontSize: 11 }}>Runde {pb.version ?? 1}</span>
-                              <span style={{ fontFamily: "DM Mono, monospace", fontSize: 11, color: C.textSubtle }}>{fmtDT(pb.submittedAt)}</span>
+                            <div key={pb.id} style={{ display: "grid", gridTemplateColumns: "160px 110px 150px", gap: 20, alignItems: "center", padding: "5px 0", borderBottom: `1px solid ${C.mono100}` }}>
+                              <span style={{ fontSize: 13, fontWeight: 500, color: C.textDark }}>{formatCHF(pb.amount)}</span>
+                              <span style={{ display: "inline-block", border: `1px solid ${C.mono100}`, borderRadius: 20, padding: "2px 10px", fontSize: 12, color: C.textDark, background: C.bgPage, whiteSpace: "nowrap" }}>
+                                Runde {pb.version ?? 1}
+                              </span>
+                              <span style={{ fontSize: 12, color: C.textSubtle, whiteSpace: "nowrap" }}>
+                                {fmtDateLong(pb.submittedAt)}, {fmtTimeOnly(pb.submittedAt)}
+                              </span>
                             </div>
                           ))
                         ) : (
-                          <div style={{ fontSize: 12, color: C.textSubtle }}>Keine früheren Gebote</div>
+                          <div style={{ fontSize: 13, color: C.textSubtle }}>Keine früheren Angebote</div>
                         )}
                       </div>
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  </div>
+                )}
+              </div>
+            );
+          }
 
-            {/* Registered buyers with no bid */}
-            {noBidBuyers.length > 0 && (
-              <>
-                <div style={{ height: 1, background: C.mono300, margin: "4px 0" }} />
-                {noBidBuyers.map((buyer) => {
-                  const isExpanded = expandedBuyers.has(buyer.id);
-                  return (
-                    <div key={buyer.id} style={{ borderBottom: `1px solid ${C.mono100}`, opacity: 0.55 }}>
-                      <div
-                        style={{ display: "grid", gridTemplateColumns: "32px 1fr 140px 120px 90px", gap: 16, padding: "16px 0", alignItems: "start", cursor: "pointer" }}
-                        onClick={() => toggleExpanded(buyer.id)}
-                      >
-                        <div style={{
-                          width: 26, height: 26, borderRadius: "50%",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          fontSize: 11, fontWeight: 600,
-                          border: `1px dashed ${C.mono300}`,
-                          color: C.textSubtle, background: "transparent",
-                        }}>
-                          —
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 14, fontWeight: 500, color: C.textDark }}>{buyer.name}</div>
-                          <div style={{ fontSize: 12, color: C.textSubtle, marginTop: 1 }}>{buyer.email}</div>
-                          <div style={{ fontSize: 11, color: C.textSubtle, marginTop: 3 }}>Noch kein Angebot</div>
-                        </div>
-                        <div style={{ textAlign: "right", color: C.textSubtle, fontSize: 13 }}>—</div>
-                        <div style={{ textAlign: "right", color: C.textSubtle, fontSize: 13 }}>—</div>
-                        <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-                          <span style={{ fontSize: 13, color: C.textSubtle }}>—</span>
-                          <div style={{ color: C.textSubtle }}>
-                            <IconChevronDown open={isExpanded} />
+          return (
+            <div>
+              {/* Invited bidders */}
+              {invitedBidders.map((bid, idx) => renderBidRow(bid, idx, true))}
+
+              {/* Not invited section */}
+              {notInvitedBidders.length > 0 && (
+                <>
+                  <div style={{ marginTop: 16, marginBottom: 8 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: C.textSubtle }}>
+                      {notInvitedBidders.length} nicht eingeladen
+                    </span>
+                  </div>
+                  <div style={{ opacity: 0.55 }}>
+                    {notInvitedBidders.map((bid, idx) => renderBidRow(bid, idx, false))}
+                  </div>
+                </>
+              )}
+
+              {/* Registered buyers with no bid */}
+              {noBidBuyers.length > 0 && (
+                <>
+                  {noBidBuyers.map((buyer) => {
+                    const isExpanded = expandedBuyers.has(buyer.id);
+                    return (
+                      <div key={buyer.id} style={{ borderBottom: `1px solid ${C.mono100}`, opacity: 0.55 }}>
+                        <div
+                          style={{ display: "grid", gridTemplateColumns: "32px 1fr 160px 110px 150px", gap: 20, padding: "18px 12px", alignItems: "start", cursor: "pointer" }}
+                          onClick={() => toggleExpanded(buyer.id)}
+                        >
+                          <div style={{
+                            width: 26, height: 26, borderRadius: "50%",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: 11, fontWeight: 600,
+                            border: `1px dashed ${C.mono300}`,
+                            color: C.textSubtle, background: "transparent",
+                          }}>
+                            —
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 14, fontWeight: 500, color: C.textDark }}>{buyer.name}</div>
+                            <div style={{ fontSize: 12, color: C.textSubtle, marginTop: 1 }}>{buyer.email}</div>
+                            <div style={{ fontSize: 11, color: C.textSubtle, marginTop: 3 }}>Noch kein Angebot</div>
+                          </div>
+                          <div style={{ color: C.textSubtle, fontSize: 13 }}>—</div>
+                          <div style={{ color: C.textSubtle, fontSize: 13 }}>—</div>
+                          <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+                            <div style={{ color: C.textSubtle }}>
+                              <IconChevronDown open={isExpanded} />
+                            </div>
                           </div>
                         </div>
-                      </div>
-
-                      {isExpanded && (
-                        <div style={{ background: C.bgSurface, borderRadius: C.radiusMd, padding: "12px 16px", margin: "0 0 8px 0" }}>
-                          {buyer.phone && (
-                            <a href={`tel:${buyer.phone}`} style={{ display: "block", fontSize: 13, color: C.textInfo, textDecoration: "none", marginBottom: 4 }}>
-                              {buyer.phone}
+                        {isExpanded && (
+                          <div style={{ background: C.bgSurface, borderRadius: C.radiusMd, padding: "12px 16px", margin: "0 0 8px 0" }}>
+                            {buyer.phone && (
+                              <a href={`tel:${buyer.phone}`} style={{ display: "block", fontSize: 13, color: C.textInfo, textDecoration: "none", marginBottom: 4 }}>
+                                {buyer.phone}
+                              </a>
+                            )}
+                            <a href={`mailto:${buyer.email}`} style={{ display: "block", fontSize: 13, color: C.textInfo, textDecoration: "none", marginBottom: 4 }}>
+                              {buyer.email}
                             </a>
-                          )}
-                          <a href={`mailto:${buyer.email}`} style={{ display: "block", fontSize: 13, color: C.textInfo, textDecoration: "none", marginBottom: 4 }}>
-                            {buyer.email}
-                          </a>
-                          <div style={{ fontSize: 12, color: C.textSubtle, marginBottom: 4 }}>
-                            Registriert {new Date(buyer.registeredAt).toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" })}
+                            <div style={{ fontSize: 12, color: C.textSubtle, marginBottom: 4 }}>
+                              Registriert {new Date(buyer.registeredAt).toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" })}
+                            </div>
+                            {buyer.offmarketOptIn && (
+                              <span style={{ ...badge.neutral, display: "inline-block" }}>Off-Market</span>
+                            )}
                           </div>
-                          {buyer.offmarketOptIn && (
-                            <span style={{ ...badge.neutral, display: "inline-block" }}>Off-Market</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </>
-            )}
-          </div>
-        )}
+                        )}
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
-      {/* ── Section 5: Aktivitätsprotokoll ── */}
+      {/* ── Section 5: Activity log ── */}
       {events.length > 0 && (
         <div style={{ paddingTop: 28 }}>
-          <div style={{ ...T.label, marginBottom: 14 }}>AKTIVITÄTSPROTOKOLL</div>
+          <div style={{ ...T.label, marginBottom: 14 }}>Aktivitätsprotokoll</div>
           <div>
             {events.map((evt, i) => (
               <div
@@ -979,7 +933,7 @@ function AngeboteTab({
                     <span style={{ fontSize: 13, color: C.textDefault }}>
                       <span style={{ fontWeight: 500, color: C.textDark }}>{evt.name}</span>
                       {" "}hat ein Angebot über{" "}
-                      <span style={{ fontFamily: "DM Mono, monospace", fontWeight: 500, color: C.textDark }}>{formatCHF(evt.amount)}</span>
+                      <span style={{ fontWeight: 500, color: C.textDark }}>{formatCHF(evt.amount)}</span>
                       {" "}eingereicht{" "}
                       <span style={{ ...badge.info, padding: "2px 6px" }}>Runde {evt.round}</span>
                     </span>
@@ -990,11 +944,16 @@ function AngeboteTab({
                     </span>
                   )}
                 </div>
-                <div style={{ flexShrink: 0, fontFamily: "DM Mono, monospace", fontSize: 11, color: C.textSubtle }}>
+                <div style={{ flexShrink: 0, fontSize: 11, color: C.textSubtle }}>
                   {fmtDT(evt.timestamp)}
                 </div>
               </div>
             ))}
+          </div>
+          <div style={{ marginTop: 12, textAlign: "right" }}>
+            <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: C.textInfo, padding: 0 }}>
+              Mehr anzeigen
+            </button>
           </div>
         </div>
       )}
@@ -1021,12 +980,47 @@ const LEVEL_ACCENT: Record<1 | 2 | 3, string> = {
   3: C.textSubtle,
 };
 
+function getDocIconColor(filename: string): string {
+  const ext = filename.split(".").pop()?.toLowerCase() ?? "";
+  if (ext === "pdf") return "#E5484D";
+  if (ext === "docx" || ext === "doc") return "#3B82F6";
+  if (ext === "xlsx" || ext === "xls") return "#22C55E";
+  return "#73787A";
+}
+
+function DocFileIcon({ filename }: { filename: string }) {
+  const color = getDocIconColor(filename);
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+      <polyline points="10 9 9 9 8 9" />
+    </svg>
+  );
+}
+
+function UsersIcon() {
+  return (
+    <svg width="14" height="10" viewBox="0 0 14 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline", verticalAlign: "middle" }}>
+      <path d="M10 9v-.75C10 7.01 8.99 6 7.75 6H6.25C5.01 6 4 7.01 4 8.25V9" />
+      <circle cx="7" cy="3.5" r="1.5" />
+      <path d="M13 9v-.5c0-.97-.73-1.77-1.67-1.94M10.33 1.06A2 2 0 0 1 13 3" />
+      <path d="M1 9v-.5c0-.97.73-1.77 1.67-1.94M3.67 1.06A2 2 0 0 0 1 3" />
+    </svg>
+  );
+}
+
 function DokumenteTab({ bidding, buyers, onBiddingChange }: DokumenteTabProps) {
-  const [freigabeState, setFreigabeState] = useState<Record<string, FreigabeEntry>>({});
   const [toast, setToast] = useState<string | null>(null);
-  const [level3ExtraAccess, setLevel3ExtraAccess] = useState(0);
+  const [level3AccessBuyerIds, setLevel3AccessBuyerIds] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadLevel, setUploadLevel] = useState<1 | 2 | 3 | null>(null);
+  const [buyerModalOpen, setBuyerModalOpen] = useState(false);
+  // Draft selection while modal is open; initialised from committed state on open
+  const [selectedBuyerIds, setSelectedBuyerIds] = useState<Set<string>>(new Set());
+  const [accessViewLevel, setAccessViewLevel] = useState<1 | 2 | 3 | null>(null);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -1034,6 +1028,24 @@ function DokumenteTab({ bidding, buyers, onBiddingChange }: DokumenteTabProps) {
   }
 
   const level2BuyerCount = buyers.filter((b) => !!(b.phone)).length;
+
+  // Build sorted bids for the modal (highest bid per buyer)
+  const latestBidByBuyer = useMemo(() => {
+    const map = new Map<string, GridbidOffer>();
+    for (const offer of bidding.offers) {
+      const existing = map.get(offer.participantId);
+      if (!existing || offer.amount > existing.amount) map.set(offer.participantId, offer);
+    }
+    return map;
+  }, [bidding.offers]);
+
+  const sortedModalBuyers = useMemo(() => {
+    return buyers
+      .filter((b) => latestBidByBuyer.has(b.id))
+      .sort((a, b) => (latestBidByBuyer.get(b.id)?.amount ?? 0) - (latestBidByBuyer.get(a.id)?.amount ?? 0));
+  }, [buyers, latestBidByBuyer]);
+
+  const topBuyerId = sortedModalBuyers[0]?.id;
 
   const levels: Array<{
     num: 1 | 2 | 3;
@@ -1043,9 +1055,9 @@ function DokumenteTab({ bidding, buyers, onBiddingChange }: DokumenteTabProps) {
     locked: boolean;
     docs: string[];
   }> = [
-    { num: 1, label: "Level 1", desc: "Alle registrierten Interessent:innen", accessCount: buyers.length, locked: false, docs: bidding.documents.level1 },
-    { num: 2, label: "Level 2", desc: "Verifizierte Käufer:innen (Telefon bestätigt)", accessCount: level2BuyerCount, locked: false, docs: bidding.documents.level2 },
-    { num: 3, label: "Level 3", desc: "Manuelle Freigabe — vertrauliche Unterlagen", accessCount: level3ExtraAccess, locked: true, docs: bidding.documents.level3 },
+    { num: 1, label: "Bei Registrierung", desc: "Alle registrierten Interessent:innen", accessCount: buyers.length, locked: false, docs: bidding.documents.level1 },
+    { num: 2, label: "Nach erstem Angebot", desc: "Verifizierte Käufer:innen (Telefon bestätigt)", accessCount: level2BuyerCount, locked: false, docs: bidding.documents.level2 },
+    { num: 3, label: "Nach Freigabe", desc: "Manuelle Freigabe — vertrauliche Unterlagen", accessCount: level3AccessBuyerIds.size, locked: true, docs: bidding.documents.level3 },
   ];
 
   function addDocument(level: 1 | 2 | 3, title: string) {
@@ -1057,115 +1069,275 @@ function DokumenteTab({ bidding, buyers, onBiddingChange }: DokumenteTabProps) {
     onBiddingChange({ ...bidding, documents: updated });
   }
 
-  function freigabeKey(level: number, docIdx: number) {
-    return `${level}-${docIdx}`;
+  function openBuyerModal() {
+    setSelectedBuyerIds(new Set(level3AccessBuyerIds));
+    setBuyerModalOpen(true);
   }
 
-  function setFreigabeBuyer(key: string, buyerId: string) {
-    setFreigabeState((prev) => ({ ...prev, [key]: { buyerId, confirming: false } }));
+  function saveBuyerAccess() {
+    setLevel3AccessBuyerIds(new Set(selectedBuyerIds));
+    setBuyerModalOpen(false);
   }
 
-  function confirmFreigabe(key: string) {
-    const entry = freigabeState[key];
-    if (!entry) return;
-    setFreigabeState((prev) => { const next = { ...prev }; delete next[key]; return next; });
-    setLevel3ExtraAccess((n) => n + 1);
-    showToast("Dokument freigegeben.");
+  function toggleBuyer(id: string) {
+    setSelectedBuyerIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   }
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {levels.map((lvl) => (
-        <div key={lvl.num} style={{ borderRadius: C.radiusLg, border: `1px solid ${C.mono100}`, background: C.bgPage, overflow: "hidden" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: `1px solid ${C.mono100}`, padding: "12px 16px", borderLeft: `3px solid ${LEVEL_ACCENT[lvl.num]}` }}>
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: C.textDark }}>{lvl.label}</span>
-                {lvl.locked && (
-                  <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: C.textSubtle }}>
-                    <IconLockSm />
-                    Freigabe durch Makler:in
-                  </span>
-                )}
-              </div>
-              <div style={{ marginTop: 2, display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: C.textSubtle }}>
-                <span>{lvl.desc}</span>
-                <span style={{ width: 1, height: 12, background: C.mono100 }} />
-                <span>
-                  <strong style={{ color: C.textDefault }}>{lvl.accessCount}</strong>{" "}
-                  Käufer:innen haben Zugriff
+        <div key={lvl.num} style={{ borderRadius: C.radiusMd, border: `1px solid ${C.mono100}`, background: C.bgPage, padding: 20 }}>
+          {/* Card header */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: 16, fontWeight: 700, color: "#182024" }}>{lvl.label}</span>
+              {lvl.locked && (
+                <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: C.textSubtle }}>
+                  <IconLockSm />
+                  Freigabe durch Makler:in
                 </span>
-              </div>
+              )}
             </div>
-            {!lvl.locked && (
-              <button
-                style={{ ...btn.secondarySm, display: "flex", alignItems: "center", gap: 6 }}
-                onClick={() => { setUploadLevel(lvl.num); fileInputRef.current?.click(); }}
+            <div style={{ fontSize: 13, color: "#73787A", display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+              <span>{lvl.desc}</span>
+              <span style={{ color: "#C0C5C8" }}>·</span>
+              <UsersIcon />
+              <span
+                onClick={() => setAccessViewLevel(lvl.num)}
+                style={{ cursor: "pointer", textDecoration: "underline", textDecorationColor: "#C0C5C8", textUnderlineOffset: 2 }}
               >
-                <IconUpload />
-                Hochladen
-              </button>
-            )}
+                <strong style={{ color: "#182024", fontWeight: 600 }}>{lvl.accessCount}</strong>{" "}
+                Käufer:innen haben Zugriff
+              </span>
+            </div>
           </div>
 
+          {/* File chips — 2-column grid */}
           {lvl.docs.length === 0 ? (
-            <div style={{ padding: "20px 16px", textAlign: "center", fontSize: 12, color: C.textSubtle }}>
+            <div style={{ padding: "16px 0", textAlign: "center", fontSize: 12, color: C.textSubtle }}>
               Noch keine Dokumente in dieser Stufe.
             </div>
           ) : (
-            <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-              {lvl.docs.map((doc, docIdx) => {
-                const fKey = freigabeKey(lvl.num, docIdx);
-                const fEntry = freigabeState[fKey];
-                return (
-                  <li key={docIdx} style={{ padding: "12px 16px", borderBottom: `1px solid ${C.mono100}` }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = C.mono25)}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
+              {lvl.docs.map((doc, docIdx) => (
+                <div key={docIdx} style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  border: `1px solid ${C.mono100}`, borderRadius: C.radiusMd,
+                  padding: "7px 10px", background: C.mono25,
+                }}>
+                  <span style={{ flexShrink: 0 }}><DocFileIcon filename={doc} /></span>
+                  <span style={{ flex: 1, fontSize: 12, color: C.textDefault, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{doc}</span>
+                  <button
+                    style={{ background: "none", border: "none", cursor: "pointer", color: C.textSubtle, padding: 0, flexShrink: 0, lineHeight: 1 }}
+                    title="Entfernen"
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ color: C.textSubtle }}><IconFile /></span>
-                      <span style={{ flex: 1, fontSize: 13, color: C.textDefault }}>{doc}</span>
-                    </div>
-                    {lvl.num === 3 && (
-                      <div style={{ marginTop: 8, paddingLeft: 20 }}>
-                        {!fEntry ? (
-                          <button
-                            style={{ ...btn.ghost, padding: "0", fontSize: 12, color: C.textInfo }}
-                            onClick={() => setFreigabeState((prev) => ({ ...prev, [fKey]: { buyerId: buyers[0]?.id ?? "", confirming: false } }))}
-                          >
-                            Für Käufer:in freigeben →
-                          </button>
-                        ) : (
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <select
-                              value={fEntry.buyerId}
-                              onChange={(e) => setFreigabeBuyer(fKey, e.target.value)}
-                              style={{ borderRadius: C.radiusMd, border: `1px solid ${C.mono100}`, padding: "4px 8px", fontSize: 12, color: C.textDefault, outline: "none" }}
-                            >
-                              {buyers.map((b) => (
-                                <option key={b.id} value={b.id}>{b.name}</option>
-                              ))}
-                            </select>
-                            <button style={btn.primarySm} onClick={() => confirmFreigabe(fKey)}>
-                              Freigeben
-                            </button>
-                            <button
-                              style={{ ...btn.ghostSm, color: C.textSubtle }}
-                              onClick={() => setFreigabeState((prev) => { const next = { ...prev }; delete next[fKey]; return next; })}
-                            >
-                              ×
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
           )}
+
+          {/* Card footer — upload + (choose buyers for lvl 3) */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button
+              style={{ ...btn.secondarySm, display: "flex", alignItems: "center", gap: 6 }}
+              onClick={() => { setUploadLevel(lvl.num); fileInputRef.current?.click(); }}
+            >
+              <IconUpload />
+              Mehr hochladen
+            </button>
+            {lvl.num === 3 && (
+              <button style={btn.primarySm} onClick={openBuyerModal}>
+                Käufer auswählen
+              </button>
+            )}
+          </div>
         </div>
       ))}
+
+      {/* Access viewer modal */}
+      {accessViewLevel !== null && (() => {
+        const accessBuyers =
+          accessViewLevel === 1 ? buyers :
+          accessViewLevel === 2 ? buyers.filter((b) => !!b.phone) :
+          buyers.filter((b) => level3AccessBuyerIds.has(b.id));
+        const sortedAccess = [...accessBuyers].sort(
+          (a, b) => (latestBidByBuyer.get(b.id)?.amount ?? 0) - (latestBidByBuyer.get(a.id)?.amount ?? 0)
+        );
+        const topId = sortedAccess[0]?.id;
+        return (
+          <div
+            style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}
+            onClick={() => setAccessViewLevel(null)}
+          >
+            <div
+              style={{ background: "#fff", borderRadius: 12, boxShadow: "0 8px 32px rgba(0,0,0,0.18)", width: "100%", maxWidth: 420, margin: 16, overflow: "hidden" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 20px 12px" }}>
+                <span style={{ fontSize: 16, fontWeight: 700, color: "#182024" }}>
+                  {accessBuyers.length} Käufer:innen haben Zugriff
+                </span>
+                <button
+                  style={{ background: "none", border: "none", cursor: "pointer", color: C.textSubtle, fontSize: 20, lineHeight: 1, padding: 0 }}
+                  onClick={() => setAccessViewLevel(null)}
+                >×</button>
+              </div>
+              <div style={{ padding: "0 20px 16px", fontSize: 13, color: "#73787A" }}>
+                Diese Käufer:innen haben aktuell Zugriff auf die Dokumente:
+              </div>
+
+              {/* Buyer list */}
+              <div style={{ border: `1px solid ${C.mono100}`, borderRadius: 8, margin: "0 20px 20px" }}>
+                {sortedAccess.length === 0 ? (
+                  <div style={{ padding: 20, textAlign: "center", fontSize: 13, color: C.textSubtle }}>Noch kein Zugriff gewährt.</div>
+                ) : sortedAccess.map((buyer, idx) => {
+                  const bid = latestBidByBuyer.get(buyer.id);
+                  const isTop = buyer.id === topId && bid !== undefined;
+                  const qualLvl = getBuyerQualLevel(buyer);
+                  return (
+                    <div
+                      key={buyer.id}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 10, padding: "12px 16px",
+                        borderBottom: idx < sortedAccess.length - 1 ? `1px solid ${C.mono100}` : "none",
+                      }}
+                    >
+                      <span style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#182024", fontWeight: 500 }}>
+                        {buyer.name}
+                        {(() => {
+                          const lvlStyle: Record<1|2|3, { bg: string; border: string; color: string }> = {
+                            1: { bg: "#FBF2EA", border: "#F0D5B0", color: "#B56100" },
+                            2: { bg: "#EDF2FE", border: "#B8CCF5", color: "#3968C2" },
+                            3: { bg: "#EAF3EE", border: "#A3D5B8", color: "#288352" },
+                          };
+                          const s = lvlStyle[qualLvl];
+                          return (
+                            <span style={{ background: s.bg, border: `1px solid ${s.border}`, borderRadius: 4, padding: "1px 6px", fontSize: 11, fontWeight: 600, color: s.color, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                              <IconShieldCheck color={s.color} />
+                              {qualLvl}
+                            </span>
+                          );
+                        })()}
+                      </span>
+                      {isTop && (
+                        <span style={{ fontSize: 11, fontWeight: 600, background: "#1D4ED8", color: "#fff", borderRadius: 20, padding: "2px 8px", whiteSpace: "nowrap" }}>
+                          Highest bid
+                        </span>
+                      )}
+                      <span style={{ fontSize: 13, fontWeight: 700, color: isTop ? "#1D4ED8" : "#182024", whiteSpace: "nowrap" }}>
+                        {bid ? formatCHF(bid.amount) : "—"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Footer */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px 20px" }}>
+                <button
+                  style={{ background: "none", border: "none", cursor: "pointer", fontSize: 14, color: C.textDefault, fontWeight: 500 }}
+                  onClick={() => setAccessViewLevel(null)}
+                >
+                  Abbrechen
+                </button>
+                <button
+                  style={{ background: "#182024", color: "#fff", border: "none", borderRadius: 20, padding: "10px 24px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}
+                  onClick={() => setAccessViewLevel(null)}
+                >
+                  Schliessen
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Käufer auswählen modal */}
+      {buyerModalOpen && (
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}
+          onClick={() => setBuyerModalOpen(false)}
+        >
+          <div
+            style={{ background: "#fff", borderRadius: 12, boxShadow: "0 8px 32px rgba(0,0,0,0.18)", width: "100%", maxWidth: 420, margin: 16, overflow: "hidden" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 20px 12px" }}>
+              <span style={{ fontSize: 16, fontWeight: 700, color: "#182024" }}>Käufer auswählen</span>
+              <button
+                style={{ background: "none", border: "none", cursor: "pointer", color: C.textSubtle, fontSize: 20, lineHeight: 1, padding: 0 }}
+                onClick={() => setBuyerModalOpen(false)}
+              >×</button>
+            </div>
+            <div style={{ padding: "0 20px 16px", fontSize: 13, color: "#73787A" }}>
+              Wähle die Käufer:innen aus, denen du Zugriff auf die Dokumente geben möchtest.
+            </div>
+
+            {/* Buyer list */}
+            <div style={{ borderTop: `1px solid ${C.mono100}`, borderBottom: `1px solid ${C.mono100}` }}>
+              {sortedModalBuyers.length === 0 ? (
+                <div style={{ padding: "20px", textAlign: "center", fontSize: 13, color: C.textSubtle }}>Noch keine Gebote vorhanden.</div>
+              ) : sortedModalBuyers.map((buyer, idx) => {
+                const bid = latestBidByBuyer.get(buyer.id);
+                const checked = selectedBuyerIds.has(buyer.id);
+                const isTop = buyer.id === topBuyerId;
+                return (
+                  <label
+                    key={buyer.id}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 12, padding: "12px 20px",
+                      borderBottom: idx < sortedModalBuyers.length - 1 ? `1px solid ${C.mono100}` : "none",
+                      cursor: "pointer", background: "transparent",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleBuyer(buyer.id)}
+                      style={{ width: 16, height: 16, flexShrink: 0, accentColor: "#182024" }}
+                    />
+                    <span style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#182024", fontWeight: 500 }}>
+                      {buyer.name}
+                      {isTop && (
+                        <span style={{ fontSize: 11, fontWeight: 600, background: "#1D4ED8", color: "#fff", borderRadius: 20, padding: "2px 8px" }}>
+                          Highest bid
+                        </span>
+                      )}
+                    </span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "#182024", whiteSpace: "nowrap" }}>
+                      {bid ? formatCHF(bid.amount) : "—"}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+
+            {/* Modal footer */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px" }}>
+              <button
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: 14, color: C.textDefault, fontWeight: 500 }}
+                onClick={() => setBuyerModalOpen(false)}
+              >
+                Abbrechen
+              </button>
+              <button
+                style={{ background: "#182024", color: "#fff", border: "none", borderRadius: 20, padding: "10px 24px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}
+                onClick={saveBuyerAccess}
+              >
+                Speichern
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <input
         ref={fileInputRef}
@@ -1205,78 +1377,115 @@ interface EinstellungenTabProps {
   onBiddingChange: (u: WorkspaceBidding) => void;
 }
 
-function EinstellungenTab({ bidding, onBiddingChange }: EinstellungenTabProps) {
-  const [biddingRules, setBiddingRules] = useState(bidding.biddingRules);
-  const [settingsSaved, setSettingsSaved] = useState(false);
+function EinstellungenTab({ bidding, onBiddingChange: _onBiddingChange }: EinstellungenTabProps) {
   const effectiveStatus = getEffectiveStatus(bidding);
   const isLocked = effectiveStatus === "active" || effectiveStatus === "round2_active";
 
-  function save() {
-    onBiddingChange({ ...bidding, biddingRules });
-    setSettingsSaved(true);
-    setTimeout(() => setSettingsSaved(false), 2500);
-  }
+  const cardStyle: React.CSSProperties = {
+    borderRadius: 8,
+    border: "1px solid #E8E9E9",
+    background: "#FFFFFF",
+    padding: "20px 24px",
+    marginBottom: 0,
+  };
 
-  const readOnlyFields = [
-    { label: "Titel",             value: bidding.title || "—" },
-    { label: "Adresse",           value: bidding.address || "—" },
-    { label: "Vorlage",           value: "Standard" },
-    { label: "Sichtbarkeit",      value: processTypeLabel(bidding.processType) },
-    { label: "Rundenanzahl",      value: String(bidding.roundsPlanned) },
-    { label: "Preisorientierung", value: priceDisplayLabel(bidding.priceDisplay) },
-    { label: "Frist",             value: bidding.deadline ? fmtDT(bidding.deadline) : "Ohne Frist" },
-    { label: "Erstellt",          value: bidding.createdAt ? formatDate(bidding.createdAt) : "—" },
-  ];
+  const cardTitleRow = (title: string, action?: React.ReactNode) => (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+      <span style={{ fontSize: 15, fontWeight: 600, color: "#182024" }}>{title}</span>
+      {action}
+    </div>
+  );
+
+  const fieldRows = (rows: { label: string; value: React.ReactNode }[]) =>
+    rows.map(({ label, value }, i) => (
+      <div
+        key={label}
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "10px 0",
+          ...(i < rows.length - 1 ? { borderBottom: "1px solid #F0F1F1" } : {}),
+        }}
+      >
+        <span style={{ fontSize: 13, color: "#73787A", fontWeight: 400 }}>{label}</span>
+        <span style={{ fontSize: 13, color: "#182024", fontWeight: 400 }}>{value}</span>
+      </div>
+    ));
 
   return (
-    <div className="space-y-5">
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {isLocked && (
-        <div style={{ borderRadius: C.radiusMd, border: `1px solid ${C.mono300}`, background: C.bgWarning, padding: "12px 16px", fontSize: 13, color: C.textWarning }}>
-          Einstellungen können während eines aktiven Verfahrens nicht geändert werden.
+        <div style={{ borderRadius: 8, border: "1px solid #BFDBFE", background: "#EFF6FF", padding: "12px 16px", fontSize: 13, color: "#1E40AF", display: "flex", alignItems: "flex-start", gap: 8 }}>
+          <span style={{ flexShrink: 0, marginTop: 1 }}><IconInfo /></span>
+          <span>Einstellungen können während eines aktiven Verfahrens nicht geändert werden.</span>
         </div>
       )}
 
-      <div style={{ overflow: "hidden", borderRadius: C.radiusLg, border: `1px solid ${C.mono100}`, background: C.bgPage }}>
-        {readOnlyFields.map(({ label, value }, i) => (
-          <div
-            key={label}
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "12px 16px",
-              ...(i > 0 ? { borderTop: `1px solid ${C.mono100}` } : {}),
-            }}
-          >
-            <span style={{ fontSize: 13, color: C.textSubtle }}>{label}</span>
-            <span style={{ fontSize: 13, color: C.textDark }}>{value}</span>
-          </div>
-        ))}
+      {/* Card 1: Zusätzliche Informationen */}
+      <div style={cardStyle}>
+        {cardTitleRow(
+          "Zusätzliche Informationen",
+          <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "#73787A", padding: 0 }} onClick={() => {}}>Bearbeiten</button>
+        )}
+        <p style={{ fontSize: 14, color: bidding.biddingRules ? "#182024" : "#73787A", margin: 0, lineHeight: 1.5 }}>
+          {bidding.biddingRules || "Keine Informationen hinzugefügt."}
+        </p>
       </div>
 
-      <div>
-        <label style={{ display: "block", marginBottom: 4, fontSize: 13, fontWeight: 600, color: C.textDefault }}>
-          Informationen für Interessent:innen
-        </label>
-        <textarea
-          value={biddingRules}
-          onChange={(e) => setBiddingRules(e.target.value)}
-          rows={6}
-          style={{ width: "100%", resize: "none", borderRadius: C.radiusMd, border: `1px solid ${C.mono300}`, padding: "8px 12px", fontSize: 13, color: C.textDefault, outline: "none", boxSizing: "border-box" }}
-          onFocus={(e) => (e.currentTarget.style.borderColor = C.textInfo)}
-          onBlur={(e) => (e.currentTarget.style.borderColor = C.mono300)}
-          placeholder="Z.B. Mindestanforderungen, Prozessbeschreibung, wichtige Hinweise…"
-        />
-        <div style={{ marginTop: 4, fontSize: 12, color: C.textSubtle }}>
-          Änderungen werden sofort im Käufer:innen Deal Room sichtbar.
-        </div>
-        <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 12 }}>
-          <button style={btn.secondary} onClick={save}>
-            Hinweis speichern
-          </button>
-          {settingsSaved && (
-            <span style={{ fontSize: 13, color: C.textSuccess }}>Gespeichert ✓</span>
-          )}
-        </div>
+      {/* Card 2: Verfahren */}
+      <div style={cardStyle}>
+        {cardTitleRow("Verfahren")}
+        {fieldRows([
+          { label: "Vorlage",         value: "Standard" },
+          { label: "Sichtbarkeit",    value: processTypeLabel(bidding.processType) },
+          { label: "Rundenanzahl",    value: String(bidding.roundsPlanned) },
+          { label: "Preisorientierung", value: priceDisplayLabel(bidding.priceDisplay) },
+          { label: "Erstellt",        value: bidding.createdAt ? formatDate(bidding.createdAt) : "—" },
+        ])}
       </div>
+
+      {/* Card 3: Objekt */}
+      <div style={cardStyle}>
+        {cardTitleRow("Objekt")}
+        {fieldRows([
+          { label: "Titel",   value: bidding.title || "—" },
+          { label: "Adresse", value: bidding.address || "—" },
+          {
+            label: "Externer Link",
+            value: bidding.websiteUrl
+              ? <span style={{ fontSize: 13, color: "#2563EB", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 260 }}>{bidding.websiteUrl}</span>
+              : "—",
+          },
+        ])}
+      </div>
+
+      {/* Card 4: Smart Matching (conditional) */}
+      {bidding.smartMatching && (
+        <div style={cardStyle}>
+          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+            <img src={smartMatchingIllustration} alt="" style={{ height: 120, width: "auto", flexShrink: 0 }} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <span style={{ fontSize: 15, fontWeight: 600, color: "#182024" }}>Smart Matching aktiviert</span>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                {[
+                  "Erweitert die Reichweite deines Inserats",
+                  "Empfiehlt dein Objekt passenden Käufer:innen",
+                  "Spare CHF 60 beim Abschluss",
+                ].map((item) => (
+                  <div key={item} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#182024" }}>
+                    <span style={{ color: "#2563EB", fontWeight: 700 }}>✓</span>
+                    {item}
+                  </div>
+                ))}
+              </div>
+              <div style={{ fontSize: 13, color: "#182024", marginTop: 4 }}>
+                Bei Abschluss:{" "}
+                <span style={{ color: "#2563EB", fontWeight: 600 }}>CHF 290</span>{" "}
+                <span style={{ textDecoration: "line-through", color: "#73787A" }}>CHF 350</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1418,7 +1627,7 @@ function Round2WizardModal({ open, onClose, buyers, uniqueBids, onConfirm }: Rou
                         }}>{idx + 1}</div>
                         <span style={{ fontSize: 14, fontWeight: 500, color: C.textDark }}>{name}</span>
                       </div>
-                      <span style={{ fontFamily: "DM Mono, monospace", fontSize: 14, fontWeight: 500, color: C.textDark, flexShrink: 0 }}>
+                      <span style={{ fontSize: 14, fontWeight: 500, color: C.textDark, flexShrink: 0 }}>
                         {formatCHF(bid.amount)}
                       </span>
                     </label>
@@ -1609,7 +1818,7 @@ function CloseWizardModal({ open, onClose, buyers, uniqueBids, onConfirm }: Clos
                     <label key={bid.participantId} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: `1px solid ${C.mono100}`, cursor: "pointer", background: checked ? C.bgSurface : "transparent" }}>
                       <input type="radio" name="winner" checked={checked} onChange={() => handleWinnerChange(bid.participantId)} style={{ accentColor: C.textDark }} />
                       <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: C.textDark }}>{name}</span>
-                      <span style={{ fontFamily: "DM Mono, monospace", fontSize: 14, color: C.textDark }}>{formatCHF(bid.amount)}</span>
+                      <span style={{ fontSize: 14, color: C.textDark }}>{formatCHF(bid.amount)}</span>
                     </label>
                   );
                 })}
@@ -1646,14 +1855,14 @@ function CloseWizardModal({ open, onClose, buyers, uniqueBids, onConfirm }: Clos
                   value={finalPrice}
                   onChange={e => setFinalPrice(e.target.value === "" ? "" : Number(e.target.value))}
                   placeholder="z.B. 1500000"
-                  style={{ width: "100%", borderRadius: C.radiusMd, border: `1px solid ${C.mono300}`, padding: "8px 12px", fontSize: 13, color: C.textDefault, outline: "none", boxSizing: "border-box", fontFamily: "DM Mono, monospace" }}
+                  style={{ width: "100%", borderRadius: C.radiusMd, border: `1px solid ${C.mono300}`, padding: "8px 12px", fontSize: 13, color: C.textDefault, outline: "none", boxSizing: "border-box", fontFamily: "DM Sans, sans-serif" }}
                   onFocus={e => (e.currentTarget.style.borderColor = C.textInfo)}
                   onBlur={e => (e.currentTarget.style.borderColor = C.mono300)}
                 />
               </div>
               <div style={{ background: C.bgSurface, borderRadius: C.radiusMd, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <span style={{ fontSize: 14, fontWeight: 600, color: C.textDark }}>{displayName}</span>
-                <span style={{ fontFamily: "DM Mono, monospace", fontSize: 18, fontWeight: 600, color: priceValid ? C.textDark : C.textSubtle }}>
+                <span style={{ fontSize: 18, fontWeight: 600, color: priceValid ? C.textDark : C.textSubtle }}>
                   {priceValid ? formatCHF(Number(finalPrice)) : "—"}
                 </span>
               </div>
@@ -1743,6 +1952,136 @@ function AcceptModal({ participantId, buyers, uniqueBids, onConfirm, onClose }: 
   );
 }
 
+// ─── Detail sidebar ───────────────────────────────────────────────────────────
+
+interface DetailSidebarProps {
+  bidding: WorkspaceBidding;
+  effectiveStatus: EffectiveStatus;
+  uniqueBids: GridbidOffer[];
+  onOpenRound2: () => void;
+  onOpenClose: () => void;
+}
+
+function DetailSidebar({ bidding, effectiveStatus, uniqueBids, onOpenRound2, onOpenClose }: DetailSidebarProps) {
+  const currentRoundNum = bidding.round2Deadline ? 2 : 1;
+  const activeDeadline = bidding.round2Deadline ?? bidding.deadline;
+  const isActive = effectiveStatus === "active" || effectiveStatus === "round2_active";
+
+  const countdown = activeDeadline ? formatTimeRemaining(activeDeadline) : null;
+
+  let progressPct = 0;
+  if (activeDeadline) {
+    const roundStartMs = currentRoundNum === 2 && bidding.deadline
+      ? new Date(bidding.deadline).getTime()
+      : new Date(bidding.createdAt).getTime();
+    const roundEndMs = new Date(activeDeadline).getTime();
+    const nowMs = Date.now();
+    progressPct = Math.min(100, Math.max(0, ((nowMs - roundStartMs) / (roundEndMs - roundStartMs)) * 100));
+  }
+
+  let guidanceText: string;
+  if (effectiveStatus === "active") {
+    guidanceText = `Frist läuft ab am ${bidding.deadline ? formatDate(bidding.deadline) : "—"}. Danach kannst du Runde 2 starten oder das Verfahren abschliessen.`;
+  } else if (effectiveStatus === "deadline_passed" && bidding.roundsPlanned >= 2) {
+    guidanceText = "Frist abgelaufen. Starte Runde 2 für ausgewählte Bieter:innen oder schliesse das Verfahren jetzt ab.";
+  } else if (effectiveStatus === "deadline_passed") {
+    guidanceText = "Frist abgelaufen. Nimm das beste Angebot an oder schliesse das Verfahren ab.";
+  } else if (effectiveStatus === "round2_active") {
+    guidanceText = "Runde 2 läuft. Sobald die Frist abgelaufen ist, kannst du das Verfahren abschliessen.";
+  } else if (effectiveStatus === "round2_deadline_passed") {
+    guidanceText = "Runde 2 abgelaufen. Schliesse das Verfahren ab und erteile den Zuschlag.";
+  } else if (effectiveStatus === "closed") {
+    guidanceText = "Verfahren abgeschlossen.";
+  } else {
+    guidanceText = "Entwurf — aktiviere das Verfahren, um den Prozess zu starten.";
+  }
+
+  const showRound2Btn = effectiveStatus === "active" || effectiveStatus === "deadline_passed";
+  const showCloseBtn = effectiveStatus === "active" || effectiveStatus === "deadline_passed" || effectiveStatus === "round2_active" || effectiveStatus === "round2_deadline_passed";
+
+  const roundLabel = `Runde ${currentRoundNum} von ${bidding.roundsPlanned}`;
+
+  return (
+    <div style={{
+      position: "sticky",
+      top: 57,
+      alignSelf: "flex-start",
+      width: 280,
+      flexShrink: 0,
+      borderLeft: `1px solid ${C.mono100}`,
+      padding: "24px 20px",
+      display: "flex",
+      flexDirection: "column",
+      gap: 16,
+      background: C.bgPage,
+      maxHeight: "calc(100vh - 57px)",
+      overflowY: "auto",
+      minHeight: "calc(100vh - 57px)",
+    }}>
+      {/* Round + status badge */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: C.textSubtle }}>{roundLabel}</span>
+        {isActive && (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, color: C.textSuccess, background: C.bgSuccess, borderRadius: C.radiusMd, padding: "2px 8px", border: `1px solid #BBF7D0` }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.textSuccess, display: "inline-block" }} />
+            Aktiv
+          </span>
+        )}
+        {effectiveStatus === "closed" && (
+          <span style={{ ...badge.success, fontSize: 11 }}>Abgeschlossen</span>
+        )}
+      </div>
+
+      {/* Time remaining */}
+      {countdown && (
+        <div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: C.textDark, lineHeight: 1.2 }}>
+            {countdown}
+          </div>
+          {activeDeadline && (
+            <div style={{ marginTop: 4, fontSize: 12, color: C.textInfo }}>
+              Endet: {new Date(activeDeadline).toLocaleDateString("de-CH", { day: "numeric", month: "short", year: "numeric" })}
+            </div>
+          )}
+        </div>
+      )}
+      {!countdown && effectiveStatus === "closed" && (
+        <div style={{ fontSize: 13, fontWeight: 600, color: C.textSuccess }}>Abgeschlossen</div>
+      )}
+
+      {/* Progress bar */}
+      {activeDeadline && (
+        <div style={{ height: 6, background: C.mono100, borderRadius: 3 }}>
+          <div style={{ height: 6, background: C.textInfo, borderRadius: 3, width: `${progressPct}%`, transition: "width 0.3s" }} />
+        </div>
+      )}
+
+      {/* Divider */}
+      <div style={{ height: 1, background: "#E8E9E9", margin: "0 -20px" }} />
+
+      {/* Info note */}
+      <div style={{ display: "flex", gap: 6, alignItems: "flex-start", fontSize: 12, color: C.textSubtle }}>
+        <span style={{ flexShrink: 0, marginTop: 1 }}><IconInfo /></span>
+        <span style={{ lineHeight: 1.5 }}>{guidanceText}</span>
+      </div>
+
+      {/* Action buttons */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {showRound2Btn && (
+          <button style={{ ...btn.primary, width: "100%", textAlign: "center" }} onClick={onOpenRound2}>
+            Runde 2 starten
+          </button>
+        )}
+        {showCloseBtn && (
+          <button style={{ ...btn.secondary, width: "100%", textAlign: "center" }} onClick={onOpenClose}>
+            Verfahren abschliessen
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function PropertyWorkspace({
@@ -1821,9 +2160,9 @@ export function PropertyWorkspace({
   );
 
   const tabs: Array<{ key: typeof activeTab; label: string }> = [
-    { key: "bids",      label: "Angebote" },
-    { key: "documents", label: "Dokumente" },
-    { key: "settings",  label: "Einstellungen" },
+    { key: "bids",       label: "Angebote" },
+    { key: "documents",  label: "Dokumente" },
+    { key: "settings",   label: "Einstellungen" },
   ];
 
   const effectiveStatus = getEffectiveStatus(bidding);
@@ -1837,130 +2176,159 @@ export function PropertyWorkspace({
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100%", flexDirection: "column", background: C.bgSurface }}>
-      {/* Global top bar */}
-      <header style={{ display: "flex", height: 56, flexShrink: 0, alignItems: "center", justifyContent: "space-between", background: C.bgPage, padding: "0 24px" }}>
+    <div style={{ display: "flex", flexDirection: "column", background: C.bgPage }}>
+      {/* Global top bar — sticky */}
+      <header style={{ position: "sticky", top: 0, zIndex: 40, display: "flex", height: 56, flexShrink: 0, alignItems: "center", justifyContent: "space-between", background: C.bgPage, padding: "0 24px", borderBottom: `1px solid ${C.mono100}` }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <GridBidLogoIcon />
           <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: "-0.01em", color: C.textDark }}>GridBid</span>
         </div>
         <AvatarDropdown />
       </header>
-      <div style={{ height: 1, background: C.mono100 }} />
 
-      {/* Persistent property header */}
-      <div style={{ borderBottom: `1px solid ${C.mono100}`, background: C.bgPage, padding: "16px 24px" }}>
-        <div style={{ maxWidth: 896, margin: "0 auto" }} className="space-y-3">
-          <button
-            onClick={onBack}
-            style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, color: C.textSubtle, background: "none", border: "none", cursor: "pointer", padding: 0 }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = C.textDark)}
-            onMouseLeave={(e) => (e.currentTarget.style.color = C.textSubtle)}
-          >
-            <IconChevronLeft />
-            Zurück zur Übersicht
-          </button>
+      {/* Two-column layout: left column (all content) + right sidebar (sticky) */}
+      <div style={{ display: "flex", alignItems: "stretch" }}>
 
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-            {bidding.imageUrl ? (
-              <img src={bidding.imageUrl} alt="" style={{ height: 52, width: 71, flexShrink: 0, borderRadius: C.radiusLg, objectFit: "cover" }} />
-            ) : (
-              <div style={{ display: "flex", height: 52, width: 71, flexShrink: 0, alignItems: "center", justifyContent: "center", borderRadius: C.radiusLg, background: C.mono50, color: C.mono300 }}>
-                <IconHousePlaceholder />
+        {/* ── Left column ─────────────────────────────────────────────── */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+
+          {/* Property header */}
+          <div style={{ background: C.bgPage, padding: "16px 24px 20px", flexShrink: 0 }}>
+            <div style={{ maxWidth: 896, margin: "0 auto" }}>
+
+              {/* Back link row with ⋮ on far right */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                <button
+                  onClick={onBack}
+                  style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, color: C.textSubtle, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = C.textDark)}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = C.textSubtle)}
+                >
+                  ← Zurück zur Übersicht
+                </button>
+                <button
+                  style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontSize: 20, color: C.textSubtle, lineHeight: 1, borderRadius: C.radiusMd }}
+                  title="Weitere Optionen"
+                  aria-label="Weitere Optionen"
+                >
+                  ⋮
+                </button>
               </div>
-            )}
-            <div>
-              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
-                <h1 style={{ fontSize: 20, fontWeight: 700, color: C.textDark, margin: 0 }}>
-                  {bidding.title || "Unbenannt"}
-                </h1>
-                <StatusBadge status={effectiveStatus} />
-              </div>
-              <div style={{ marginTop: 2, display: "flex", alignItems: "center", gap: 12, fontSize: 13, color: C.textSubtle }}>
-                <span>{bidding.address || "—"}</span>
-                {bidding.websiteUrl && (
-                  <a
-                    href={bidding.websiteUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ display: "flex", alignItems: "center", gap: 4, color: C.textInfo, textDecoration: "none" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
-                    onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
-                  >
-                    Öffentliche Website →
-                    <IconExternalLink />
-                  </a>
+
+              {/* Property image + title */}
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 12 }}>
+                {bidding.imageUrl ? (
+                  <img src={bidding.imageUrl} alt="" style={{ height: 48, width: 66, flexShrink: 0, borderRadius: C.radiusLg, objectFit: "cover" }} />
+                ) : (
+                  <div style={{ display: "flex", height: 48, width: 66, flexShrink: 0, alignItems: "center", justifyContent: "center", borderRadius: C.radiusLg, background: C.mono50, color: C.mono300 }}>
+                    <IconHousePlaceholder />
+                  </div>
                 )}
+                <div>
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+                    <h1 style={{ fontSize: 24, fontWeight: 700, color: C.textDark, margin: 0 }}>
+                      {bidding.title || "Unbenannt"}
+                    </h1>
+                    <StatusBadge status={effectiveStatus} />
+                  </div>
+                  <div style={{ marginTop: 2, display: "flex", alignItems: "center", gap: 12, fontSize: 13, color: C.textSubtle }}>
+                    <span>{bidding.address || "—"}</span>
+                    {bidding.websiteUrl && (
+                      <a
+                        href={bidding.websiteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ display: "flex", alignItems: "center", gap: 4, color: C.textInfo, textDecoration: "none" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
+                        onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
+                      >
+                        Öffentliche Website →
+                        <IconExternalLink />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Public link bar — compact secondary style */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, borderRadius: C.radiusMd, background: C.mono25, padding: "7px 12px" }}>
+                <span style={{ display: "flex", flexShrink: 0, alignItems: "center", gap: 4, fontSize: 12, color: C.textSubtle }}>
+                  <IconInfo />
+                  Öffentlicher Link
+                </span>
+                <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 12, color: C.textSubtle }}>
+                  {publicUrl}
+                </span>
+                <button
+                  onClick={copyUrl}
+                  style={{ fontSize: 12, fontWeight: 500, color: C.textDefault, background: C.bgPage, border: `1px solid ${C.mono300}`, borderRadius: C.radiusMd, padding: "3px 10px", cursor: "pointer", flexShrink: 0 }}
+                >
+                  {copied ? "Kopiert!" : "Kopieren"}
+                </button>
               </div>
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 16, borderRadius: C.radiusLg, border: `1px solid ${C.mono100}`, background: C.bgSurface, padding: "10px 16px" }}>
-            <span style={{ display: "flex", flexShrink: 0, alignItems: "center", gap: 6, fontSize: 13, color: C.textSubtle }}>
-              <IconInfo />
-              Öffentlicher Link
-            </span>
-            <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "DM Mono, monospace", fontSize: 13, color: C.textSubtle }}>
-              {publicUrl}
-            </span>
-            <button
-              onClick={copyUrl}
-              style={{ ...btn.secondarySm, display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}
-            >
-              <IconCopy />
-              {copied ? "Kopiert!" : "Kopieren"}
-            </button>
+          {/* Tab navigation */}
+          <div style={{ background: C.bgPage, padding: "0 24px", flexShrink: 0 }}>
+            <div style={{ maxWidth: 896, margin: "0 auto", display: "flex", borderBottom: `1px solid ${C.mono100}` }}>
+              {tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  style={{
+                    borderTop: "none", borderLeft: "none", borderRight: "none",
+                    borderBottom: activeTab === tab.key ? `2px solid ${C.textInfo}` : "2px solid transparent",
+                    color: activeTab === tab.key ? C.textInfo : C.textSubtle,
+                    padding: "12px 16px", fontSize: 13, fontWeight: 500,
+                    background: "none", cursor: "pointer", transition: "color 0.1s",
+                  }}
+                  onMouseEnter={(e) => { if (activeTab !== tab.key) e.currentTarget.style.color = C.textDark; }}
+                  onMouseLeave={(e) => { if (activeTab !== tab.key) e.currentTarget.style.color = C.textSubtle; }}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Tab navigation */}
-      <div style={{ borderBottom: `1px solid ${C.mono100}`, background: C.bgPage, padding: "0 24px" }}>
-        <div style={{ maxWidth: 896, margin: "0 auto", display: "flex" }}>
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              style={{
-                borderTop: "none", borderLeft: "none", borderRight: "none",
-                borderBottom: activeTab === tab.key ? `2px solid ${C.textInfo}` : "2px solid transparent",
-                color: activeTab === tab.key ? C.textInfo : C.textSubtle,
-                padding: "12px 16px", fontSize: 13, fontWeight: 500,
-                background: "none", cursor: "pointer", transition: "color 0.1s",
-              }}
-              onMouseEnter={(e) => { if (activeTab !== tab.key) e.currentTarget.style.color = C.textDark; }}
-              onMouseLeave={(e) => { if (activeTab !== tab.key) e.currentTarget.style.color = C.textSubtle; }}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
+          {/* Tab content */}
+          <div style={{ padding: "24px" }}>
+            <div style={{ maxWidth: 896, margin: "0 auto", width: "100%" }}>
+              {activeTab === "bids" && (
+                <AngeboteTab
+                  bidding={bidding}
+                  buyers={registeredBuyers}
+                  propBids={propBids}
+                  uniqueBids={uniqueBids}
+                  onBiddingChange={handleBiddingChange}
+                  onOpenRound2Modal={handleOpenRound2}
+                  onOpenEndDeadlineModal={handleOpenClose}
+                  onAccept={setAcceptModal}
+                  onOpenCloseWizard={handleOpenClose}
+                />
+              )}
+              {activeTab === "documents" && (
+                <DokumenteTab bidding={bidding} buyers={registeredBuyers} onBiddingChange={handleBiddingChange} />
+              )}
+              {activeTab === "settings" && (
+                <EinstellungenTab bidding={bidding} onBiddingChange={handleBiddingChange} />
+              )}
+            </div>
+          </div>
 
-      {/* Tab content */}
-      <div style={{ flex: 1, padding: "24px" }}>
-        <div style={{ maxWidth: 960, margin: "0 auto", width: "100%" }}>
-          {activeTab === "bids" && (
-            <AngeboteTab
-              bidding={bidding}
-              buyers={registeredBuyers}
-              propBids={propBids}
-              uniqueBids={uniqueBids}
-              onBiddingChange={handleBiddingChange}
-              onOpenRound2Modal={handleOpenRound2}
-              onOpenEndDeadlineModal={handleOpenClose}
-              onAccept={setAcceptModal}
-              onOpenCloseWizard={handleOpenClose}
-            />
-          )}
-          {activeTab === "documents" && (
-            <DokumenteTab bidding={bidding} buyers={registeredBuyers} onBiddingChange={handleBiddingChange} />
-          )}
-          {activeTab === "settings" && (
-            <EinstellungenTab bidding={bidding} onBiddingChange={handleBiddingChange} />
-          )}
-        </div>
-      </div>
+        </div>{/* end left column */}
+
+        {/* Right sidebar — full height from below navbar */}
+        <DetailSidebar
+          bidding={bidding}
+          effectiveStatus={effectiveStatus}
+          uniqueBids={uniqueBids}
+          onOpenRound2={handleOpenRound2}
+          onOpenClose={handleOpenClose}
+        />
+
+      </div>{/* end two-column */}
 
       {/* Modals */}
       <WarningModal

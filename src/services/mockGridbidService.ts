@@ -58,6 +58,7 @@ const INITIAL_BIDDINGS: GridbidBidding[] = [
     winnerId: null,
     winnerName: null,
     finalPrice: null,
+    smartMatching: true,
     participants: [
       { id: "p001", name: "Anna Müller",  email: "anna.mueller@example.ch",  registeredAt: "2026-04-10T08:00:00.000Z", phone: "+41 79 123 45 67" },
       { id: "p002", name: "Beat Keller",  email: "beat.keller@example.ch",   registeredAt: "2026-04-11T09:30:00.000Z" },

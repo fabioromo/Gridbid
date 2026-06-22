@@ -98,6 +98,8 @@ export interface GridbidBidding {
   winnerName: string | null;
   /** Agreed final price — only set on CLOSED biddings */
   finalPrice: number | null;
+  /** Whether Smart Matching is enabled for this bidding */
+  smartMatching?: boolean;
 }
 
 export type CreateDraftInput = Partial<
